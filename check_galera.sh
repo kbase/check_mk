@@ -88,8 +88,8 @@ while getopts “hvu:p:H:P:w:c:f:0” OPTION; do
   esac
 done
 
-mysqluser=root
-password=***REMOVED***
+mysqluser=$(grep user /root/.my.cnf|cut -f2 -d '=')		
+password=$(grep password /root/.my.cnf|cut -f2 -d '=')
 
 if [ -z "$warn" ]; then
   warn=$crit
