@@ -7,8 +7,10 @@ import time
 import requests_unixsocket
 
 # list of containers to check the logs for
+# for now edit this line to hardcode which container names to check
 containers = [ "ci_coordinator_1" , "ci_worker_1", "ci_worker_2" ]
 
+# defaults to retrieving 1 minute of logs
 now = time.time() - (1*60)
 
 status = dict()
@@ -21,7 +23,7 @@ for name in containers:
   statusText = 'UNKNOWN'
   checkOutput = ''
 
-# to do: need to filter coordinator diag lines
+# to do: try to filter coordinator diag lines
 # may need tail=larger to get enough lines
   r=session.get('http+unix://%2fvar%2frun%2fdocker.sock/containers/' + name + '/logs?stderr=1&stdout=1&tail=1&since=' + str(int(now)) )
 
