@@ -21,7 +21,6 @@ session=requests_unixsocket.Session()
 for name in containers:
   status = 3
   statusText = 'UNKNOWN'
-  checkOutput = ''
 
 # to do: try to filter coordinator diag lines
 # may need tail=larger to get enough lines
