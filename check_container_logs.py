@@ -22,6 +22,8 @@ for name in containers:
   status = 3
   statusText = 'UNKNOWN'
 
+# to do: check that container is actually up! (though if down this will alert eventually)
+
 # to do: try to filter coordinator diag lines
 # may need tail=larger to get enough lines
   r=session.get('http+unix://%2fvar%2frun%2fdocker.sock/containers/' + name + '/logs?stderr=1&stdout=1&tail=1&since=' + str(int(now)) )
