@@ -29,12 +29,12 @@ for name in containers:
 
     if (len(r.content) > 10):
       status = 0
-      statusText = 'OK'
+      statusText = 'OK: last line: '
     else:
       status = 2
-      statusText = 'CRITICAL'
+      statusText = 'CRITICAL: no logs found'
   else:
       status = 3
-      statusText = 'UNKNOWN'
+      statusText = 'UNKNOWN: no container found'
 
   print str(status) + ' containerlogs_' + name + ' - ' + statusText + ' ' + r.content.strip()
