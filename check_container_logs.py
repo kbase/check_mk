@@ -37,4 +37,4 @@ for name in containers:
       status = 3
       statusText = 'UNKNOWN'
 
-  print str(status) + ' ' + name + '_containerlogs - ' + statusText + ' ' + r.content.strip()
+  print str(status) + ' containerlogs_' + name + ' - ' + statusText + ' ' + r.content.strip()
