@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 import urllib, json
-#from os import walk, listdir
-#from os.path import isdir,join
 import time
+# used to communicate with the docker unix socket
+# so that docker doesn't have to listen on a tcp port
+# (which can be a big security hole)
 import requests_unixsocket
 
 # list of containers to check the logs for
