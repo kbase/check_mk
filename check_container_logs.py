@@ -29,16 +29,24 @@ for name in containers:
 # may need tail=larger to get enough lines
   r=session.get('http+unix://%2fvar%2frun%2fdocker.sock/containers/' + name + '/logs?stderr=1&stdout=1&tail=1&since=' + str(int(now)) )
 
+# get container state
+  statusReq=session.get('http+unix://%2fvar%2frun%2fdocker.sock/containers/' + name + '/json' )
+  state=statusReq.json()
+
   if r.status_code == 200:
 
     if (len(r.content) > 10):
       status = 0
       statusText = 'OK: last line: '
     else:
-      status = 2
-      statusText = 'CRITICAL: no logs found'
+      status = 1
+      statusText = 'WARNING: no recent logs found'
   else:
       status = 3
       statusText = 'UNKNOWN: no container found'
+
+  if ('State' not in state.keys() or state['State']['Status'] != 'running'):
+      status = 2
+      statusText = 'CRITICAL: container not running'
 
   print str(status) + ' containerlogs_' + name + ' - ' + statusText + ' ' + r.content.strip()
