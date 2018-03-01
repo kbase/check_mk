@@ -6,7 +6,7 @@ MONGO_AUTH_FILE=/root/.mongorc.js
 NAGIOS_PLUGIN_SCRIPT=/usr/local/lib64/nagios/plugins/check_mongodb.py
 # need the hostname/address that appears in rs.status()
 MONGO_ADDRESS=localhost
-MONGO_ADDRESS=db3.chicago.kbase.us
+MONGO_ADDRESS=your.hostname.here
 
 mongouser=$(grep db.auth $MONGO_AUTH_FILE |cut -f2 -d "'")
 mongopass=$(grep db.auth $MONGO_AUTH_FILE |cut -f4 -d "'")
