@@ -3,6 +3,9 @@
 import urllib, json
 import time
 import sys
+# used to communicate with the docker unix socket
+# so that docker doesn't have to listen on a tcp port		
+# (which can be a big security hole)
 import requests_unixsocket
 
 # list of containers to check the logs for
