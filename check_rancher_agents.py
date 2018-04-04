@@ -5,11 +5,12 @@ import requests
 
 # include the port if needed
 urlbase=sys.argv[1]
-username=sys.argv[2]
-password=sys.argv[3]
+envid=sys.argv[2]
+username=sys.argv[3]
+password=sys.argv[4]
 
 session=requests.Session()
-req=session.get(urlbase+'/v1/projects/1a803/hosts/', auth=(username,password))
+req=session.get(urlbase+'/v1/projects/' + envid + '/hosts/', auth=(username,password))
 data=req.json()['data']
 for host in data:
 	state=3
