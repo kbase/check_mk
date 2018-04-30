@@ -3,20 +3,28 @@
 import sys
 import requests
 
-username=sys.argv[1]
-password=sys.argv[2]
+# include the port if needed
+urlbase=sys.argv[1]
+envid=sys.argv[2]
+username=sys.argv[3]
+password=sys.argv[4]
 
 session=requests.Session()
-req=session.get('http://rancher.kbase.us:8080/v1/projects/1a7/hosts/', auth=(username,password))
+req=session.get(urlbase+'/v1/projects/' + envid + '/hosts/', auth=(username,password))
 data=req.json()['data']
+
+# need to print something here that makes sense if no hosts were found
+#if (len(data) == 0):
+#    print '3 no hosts UNKNOWN'
+
 for host in data:
 	state=3
 	stateText='UNKNOWN'
 
-	if (host['agentState'] != 'active' or host['state'] != 'active'):
+	if (host['state'] != 'active'):
 		state=2
 		stateText='CRITICAL'
-	if (host['agentState'] == 'active' and host['state'] == 'active'):
+	if (host['state'] == 'active'):
 		state=0
 		stateText='OK'
 
