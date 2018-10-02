@@ -5,7 +5,7 @@ import requests
 import json
 
 import urllib3
-urllib3.disable_warnings()
+urllib3.disable_warnings(InsecurePlatformWarning)
 
 sw_url = sys.argv[1]
 services = sys.argv[2:]
