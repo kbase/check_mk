@@ -5,7 +5,8 @@ import requests
 import json
 
 import urllib3
-urllib3.disable_warnings(InsecurePlatformWarning)
+# there is a way to only disable InsecurePlatformWarning but I can't find it now
+urllib3.disable_warnings()
 
 sw_url = sys.argv[1]
 services = sys.argv[2:]
