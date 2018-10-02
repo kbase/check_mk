@@ -4,6 +4,9 @@ import sys
 import requests
 import json
 
+import urllib3
+urllib3.disable_warnings()
+
 sw_url = sys.argv[1]
 services = sys.argv[2:]
 
