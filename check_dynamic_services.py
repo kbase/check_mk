@@ -31,7 +31,7 @@ for dynsvc in services:
     try:
         dynsvcurl = swreq.json()['result'][0]['url']
     except:
-        print '2 - CRITICAL - service wizard reports service ' + dynsvc + ' does not exist'
+        print '2 dynserv_' + dynsvc + ' - CRITICAL - service wizard reports service ' + dynsvc + ' does not exist'
         continue
 
     dynsvcdata = {
@@ -53,4 +53,4 @@ for dynsvc in services:
         svcstate=2
         svcstatetext='CRITICAL'
 
-    print str(svcstate) + ' - ' + svcstatetext + ' - service ' + dynsvc + ' reports state ' + dynsvcstate
+    print str(svcstate) + ' dynserv_' + dynsvc + ' - ' + svcstatetext + ' - service ' + dynsvc + ' reports state ' + dynsvcstate
