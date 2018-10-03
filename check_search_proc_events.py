@@ -11,10 +11,21 @@ hostname=sys.argv[1]
 username=sys.argv[2]
 password=sys.argv[3]
 
-warnInterval=3600 * 1
-critInterval=3600 * 2
+warnInterval=3600 * 2
+critInterval=3600 * 3
 warnAgo=datetime.datetime.fromtimestamp(time.time() - warnInterval, pytz.timezone("US/Pacific"))
 critAgo=datetime.datetime.fromtimestamp(time.time() - critInterval, pytz.timezone("US/Pacific"))
+
+countsStatus = {
+	'READY': {
+		'warn': 100,
+		'crit': 200
+	},
+	'UNPROC': {
+		'warn': 100,
+		'crit': 200
+	},
+}
 
 client=MongoClient(hostname)
 db=client.search
@@ -30,17 +41,37 @@ critCount = events.find({"status":"PROC","updte": {"$lt": critAgo}}).count()
 if (warnCount == 0):
   status = 0
   statusText = 'OK'
-  extraText = 'no events found older than ' + str(warnInterval) + ' seconds'
+  extraText = 'no PROC events found older than ' + str(warnInterval) + ' seconds'
 if (warnCount > 0):
   status = 1
   statusText = 'WARNING'
-  extraText = str(warnCount) + ' events found older than ' + str(warnInterval) + ' seconds'
+  extraText = str(warnCount) + ' PROC events found older than ' + str(warnInterval) + ' seconds'
 if (critCount > 0):
   status = 2
   statusText = 'CRITICAL'
-  extraText = str(critCount) + ' events found older than ' + str(critInterval) + ' seconds'
-
-#print events.find({"status":"PROC"}).count()
-#updte: {$lt: ISODate("2018-02-27T19:46:00.000Z")
+  extraText = str(critCount) + ' PROC events found older than ' + str(critInterval) + ' seconds'
 
 print str(status) + ' searcheventage' + ' - ' + statusText + ' ' + extraText
+
+eventCount={}
+eventCount['UNPROC'] = events.find({"status":"UNPROC"}).count()
+eventCount['READY'] = events.find({"status":"READY"}).count()
+totalEventCount= eventCount['READY'] + eventCount['UNPROC']
+
+for eventstate in ('READY','UNPROC'):
+	countStatus=3
+	countStatusText='UNKNOWN'
+	extraText = str(eventCount[eventstate]) + ' events in state ' + eventstate
+	if (eventCount[eventstate] <= countsStatus[eventstate]['warn']):
+		countStatus=0
+		countStatusText='OK'
+	if (eventCount[eventstate] > countsStatus[eventstate]['warn']):
+		countStatus=1
+		countStatusText='WARNING'
+	if (eventCount[eventstate] > countsStatus[eventstate]['crit']):
+		countStatus=2
+		countStatusText='CRITICAL'
+	print str(countStatus) + ' searcheventcount_' + eventstate + ' eventcount=' + str(eventCount[eventstate]) + '|totaleventcount=' + str(totalEventCount) + ' ' + countStatusText + ' ' + extraText
+
+#updte: {$lt: ISODate("2018-02-27T19:46:00.000Z")
+
