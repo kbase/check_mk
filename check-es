@@ -149,7 +149,7 @@ def int_checker(value):
             print("CRITICAL: %s is %d which is < %s" % (STATUS_CHECK, value, STATUS_CRIT))
             sys.exit(2)
         elif value < int(STATUS_WARN):
-            print("WARNING: %s is %d which is < %s" % (STATUS_CHECK, value STATUS_WARN))
+            print("WARNING: %s is %d which is < %s" % (STATUS_CHECK, value, STATUS_WARN))
             sys.exit(1)
 
         print("OK: %s is ok: %s" % (STATUS_CHECK,value))
