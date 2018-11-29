@@ -168,6 +168,7 @@ def int_checker(value):
             stateText=("WARNING: %s is >= %s" % (STATUS_CHECK, STATUS_WARN))
 
     if state == 3:
+        state=0
         stateText=("OK: %s is ok: %s" % (STATUS_CHECK,value))
     print stateText
     sys.exit(state)
