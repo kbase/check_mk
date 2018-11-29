@@ -170,12 +170,12 @@ if "--help" in sys.argv or "-h" in sys.argv:
     check_es_help()
     sys.exit(0)
 
+tmp_args = sys.argv[1:]
+tmp_args = dict([(tmp_args[i],tmp_args[i+1]) for i,b in enumerate(tmp_args[1:]) if i % 2 == 0])
+
 # setup check
 if "-x" not in sys.argv:
     tmp_args["-x"] = "status"
-
-tmp_args = sys.argv[1:]
-tmp_args = dict([(tmp_args[i],tmp_args[i+1]) for i,b in enumerate(tmp_args[1:]) if i % 2 == 0])
 
 # setup -x
 if tmp_args["-x"] == "status" or tmp_args["-x"] == "initializing_shards" or tmp_args["-x"] == "number_of_data_nodes" or tmp_args["-x"] == "number_of_nodes" or tmp_args["-x"] == "heap_used_percent" or tmp_args["-x"] == "active_shards_percent_as_number":
