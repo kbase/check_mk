@@ -187,7 +187,7 @@ else:
     tmp_args = dict([(tmp_args[i],tmp_args[i+1]) for i,b in enumerate(tmp_args[1:]) if i % 2 == 0])
 
     # setup -x
-    if tmp_args["-x"] == "status" or tmp_args["-x"] == "initializing_shards" or tmp_args["-x"] == "number_of_data_nodes" or tmp_args["-x"] == "number_of_nodes" or tmp_args["-x"] == "heap_used_percent":
+    if tmp_args["-x"] == "status" or tmp_args["-x"] == "initializing_shards" or tmp_args["-x"] == "number_of_data_nodes" or tmp_args["-x"] == "number_of_nodes" or tmp_args["-x"] == "heap_used_percent" or tmp_args["-x"] == "active_shards_percent_as_number":
         STATUS_CHECK = tmp_args["-x"]
 
         if tmp_args["-x"] == "status":
@@ -201,6 +201,9 @@ else:
         elif tmp_args["-x"] == "heap_used_percent":
             NODE_MODE = True
             COMPARISON_TYPE = "int"
+        elif tmp_args["-x"] == "active_shards_percent_as_number":
+            COMPARISON_TYPE = "int"
+
     else:
         print("%s is not supported; see help." % (tmp_args["-x"]) )
         sys.exit(1)
@@ -263,6 +266,19 @@ else:
             except ValueError:
                 print("%s is not valid." % tmp_args["-w"])
                 sys.exit(1)
+        elif STATUS_CHECK == "active_shards_percent_as_number":
+            try:
+                x_val = int(tmp_args["-w"])
+
+                if x_val < 0:
+                    print("Negative values? Really?")
+                    sys.exit(1)
+                else:
+                    STATUS_WARN = x_val
+            except ValueError:
+                print("%s is not valid." % tmp_args["-w"])
+                sys.exit(1)
+
     except Exception as e:
         print(e)
 
@@ -317,6 +333,18 @@ else:
                 print("%s is not valid." % tmp_args["-c"])
                 sys.exit(1)
         elif STATUS_CHECK == "heap_used_percent":
+            try:
+                x_val = int(tmp_args["-c"])
+
+                if x_val < 0:
+                    print("Negative values? Really?")
+                    sys.exit(1)
+                else:
+                    STATUS_CRIT = x_val
+            except ValueError:
+                print("%s is not valid." % tmp_args["-c"])
+                sys.exit(1)
+        elif STATUS_CHECK == "active_shards_percent_as_number":
             try:
                 x_val = int(tmp_args["-c"])
 
