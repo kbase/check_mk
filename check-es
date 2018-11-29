@@ -127,33 +127,33 @@ def int_checker(value):
 
     elif COMPARISON_OP == "!=":
         if value != int(STATUS_CRIT):
-            stateText("CRITICAL: %s is != %s" % (STATUS_CHECK, STATUS_CRIT))
+            stateText=("CRITICAL: %s is != %s" % (STATUS_CHECK, STATUS_CRIT))
         elif value != int(STATUS_WARN):
-            stateText("WARNING: %s is != %s" % (STATUS_CHECK, STATUS_WARN))
+            stateText=("WARNING: %s is != %s" % (STATUS_CHECK, STATUS_WARN))
 
     elif COMPARISON_OP == "<=":
         if value <= int(STATUS_CRIT):
-            stateText("CRITICAL: %s is <= %s" % (STATUS_CHECK, STATUS_CRIT))
+            stateText=("CRITICAL: %s is <= %s" % (STATUS_CHECK, STATUS_CRIT))
         elif value <= int(STATUS_WARN):
-            stateText("WARNING: %s is <= %s" % (STATUS_CHECK, STATUS_WARN))
+            stateText=("WARNING: %s is <= %s" % (STATUS_CHECK, STATUS_WARN))
 
     elif COMPARISON_OP == "<":
         if value < int(STATUS_CRIT):
-            stateText("CRITICAL: %s is %d which is < %s" % (STATUS_CHECK, value, STATUS_CRIT))
+            stateText=("CRITICAL: %s is %d which is < %s" % (STATUS_CHECK, value, STATUS_CRIT))
         elif value < int(STATUS_WARN):
-            stateText("WARNING: %s is %d which is < %s" % (STATUS_CHECK, value, STATUS_WARN))
+            stateText=("WARNING: %s is %d which is < %s" % (STATUS_CHECK, value, STATUS_WARN))
 
     elif COMPARISON_OP == ">":
         if value > int(STATUS_CRIT):
-            stateText("CRITICAL: %s is > %s" % (STATUS_CHECK, STATUS_CRIT))
+            stateText=("CRITICAL: %s is > %s" % (STATUS_CHECK, STATUS_CRIT))
         elif value > int(STATUS_WARN):
-            stateText("WARNING: %s is > %s" % (STATUS_CHECK, STATUS_WARN))
+            stateText=("WARNING: %s is > %s" % (STATUS_CHECK, STATUS_WARN))
 
     elif COMPARISON_OP == ">=":
         if value >= int(STATUS_CRIT):
-            stateText("CRITICAL: %s is >= %s" % (STATUS_CHECK, STATUS_CRIT))
+            stateText=("CRITICAL: %s is >= %s" % (STATUS_CHECK, STATUS_CRIT))
         elif value >= int(STATUS_WARN):
-            stateText("WARNING: %s is >= %s" % (STATUS_CHECK, STATUS_WARN))
+            stateText=("WARNING: %s is >= %s" % (STATUS_CHECK, STATUS_WARN))
 
     if state == 3:
         stateText=("OK: %s is ok: %s" % (STATUS_CHECK,value))
