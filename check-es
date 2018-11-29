@@ -53,7 +53,7 @@ NODE_HOSTNAME   = "_local"
 def check_es_help():
     print("Usage: check-es -x <status> -w <warn> -c <crit> [options]")
     print("Options:")
-    print("\t-x: The status to check; supported values are: status, initializing_shards, number_of_data_nodes, number_of_nodes, heap_used_percent")
+    print("\t-x: The status to check; supported values are: status, initializing_shards, number_of_data_nodes, number_of_nodes, heap_used_percent, active_shards_percent_as_number")
     print("\t-w: warning value (dependent upon status).")
     print("\t-c: critical value (dependent upon status).")
     print("\t-C: Comparison type: <,<=,>,>=,!=,== . This is ignored if -x is status.")
@@ -99,6 +99,8 @@ def start(data):
         else:
             print("CRITICAL: Unable to retrieve nodes list from %s. Is it down?" % NODE_HOSTNAME)
             sys.exit(2)
+    elif STATUS_CHECK == "active_shards_percent_as_number":
+        int_checker(health_data["active_shards_percent_as_number"])
 
 def check_status(value):
     if value == STATUS_WARN:
