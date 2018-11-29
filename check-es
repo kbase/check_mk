@@ -104,10 +104,10 @@ def start(data):
 
 def check_status(value):
     if value == STATUS_WARN:
-        print("WARNING: %s has failed with %s." % (STATUS_CHECK, STATUS_WARN))
+        print("WARNING: %s has failed with status %s." % (STATUS_CHECK, STATUS_WARN))
         sys.exit(1)
     elif value == STATUS_CRIT:
-        print("CRITICAL: %s has failed with %s." % (STATUS_CHECK, STATUS_WARN))
+        print("CRITICAL: %s has failed with status %s." % (STATUS_CHECK, STATUS_WARN))
         sys.exit(2)
 
     print("OK: %s is ok: %s" % (STATUS_CHECK,value))
@@ -146,10 +146,10 @@ def int_checker(value):
         sys.exit(0)
     elif COMPARISON_OP == "<":
         if value < int(STATUS_CRIT):
-            print("CRITICAL: %s is < %s" % (STATUS_CHECK, STATUS_CRIT))
+            print("CRITICAL: %s is %i which is < %s" % (STATUS_CHECK, value, STATUS_CRIT))
             sys.exit(2)
         elif value < int(STATUS_WARN):
-            print("WARNING: %s is < %s" % (STATUS_CHECK, STATUS_WARN))
+            print("WARNING: %s is %i which is < %s" % (STATUS_CHECK, value STATUS_WARN))
             sys.exit(1)
 
         print("OK: %s is ok: %s" % (STATUS_CHECK,value))
