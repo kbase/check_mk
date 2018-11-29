@@ -85,22 +85,16 @@ def start(data):
 
     if STATUS_CHECK == "status":
         check_status(health_data["cluster_name"],health_data["status"])
-    elif STATUS_CHECK == "initializing_shards":
-        int_checker(health_data["initializing_shards"])
-    elif STATUS_CHECK == "number_of_data_nodes":
-        int_checker(health_data["number_of_data_nodes"])
-    elif STATUS_CHECK == "number_of_nodes":
-        int_checker(health_data["number_of_nodes"])
     elif STATUS_CHECK == "heap_used_percent":
         # Verify data set just incase
         if len(node_data["nodes"]) > 0:
             node_id_key = node_data["nodes"].keys()[0]
-            int_checker(node_data["nodes"][node_id_key]["jvm"]["mem"]["heap_used_percent"])
+            int_checker(health_data["cluster_name"],node_data["nodes"][node_id_key]["jvm"]["mem"]["heap_used_percent"])
         else:
             print("CRITICAL: Unable to retrieve nodes list from %s. Is it down?" % NODE_HOSTNAME)
             sys.exit(2)
-    elif STATUS_CHECK == "active_shards_percent_as_number":
-        int_checker(health_data["active_shards_percent_as_number"])
+    else:
+        int_checker(health_data["cluster_name"],health_data["STATUS_CHECK"])
 
 def check_status(cluster_name, value):
     if value == STATUS_WARN:
@@ -113,7 +107,7 @@ def check_status(cluster_name, value):
     print("OK: cluster %s %s is ok: %s" % (cluster_name, STATUS_CHECK,value))
     sys.exit(0)
 
-def int_checker(value):
+def int_checker(cluster_name, value):
 
     state=3
     stateText='UNKNOWN'
