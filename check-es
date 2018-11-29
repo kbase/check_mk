@@ -210,55 +210,7 @@ else:
                 sys.exit(3)
             else:
                 STATUS_WARN = x_val
-        elif STATUS_CHECK == "initializing_shards":
-            try:
-                x_val = int(tmp_args["-w"])
-
-                if x_val < 0:
-                    print("Negative values? Really?")
-                    sys.exit(3)
-                else:
-                    STATUS_WARN = x_val
-            except ValueError:
-                print("%s is not valid." % tmp_args["-w"])
-                sys.exit(3)
-        elif STATUS_CHECK == "number_of_data_nodes":
-            try:
-                x_val = int(tmp_args["-w"])
-
-                if x_val < 0:
-                    print("Negative values? Really?")
-                    sys.exit(3)
-                else:
-                    STATUS_WARN = x_val
-            except ValueError:
-                print("%s is not valid." % tmp_args["-w"])
-                sys.exit(3)
-        elif STATUS_CHECK == "number_of_nodes":
-            try:
-                x_val = int(tmp_args["-w"])
-
-                if x_val < 0:
-                    print("Negative values? Really?")
-                    sys.exit(3)
-                else:
-                    STATUS_WARN = x_val
-            except ValueError:
-                print("%s is not a valid." % tmp_args["-w"])
-                sys.exit(3)
-        elif STATUS_CHECK == "heap_used_percent":
-            try:
-                x_val = int(tmp_args["-w"])
-
-                if x_val < 0:
-                    print("Negative values? Really?")
-                    sys.exit(3)
-                else:
-                    STATUS_WARN = x_val
-            except ValueError:
-                print("%s is not valid." % tmp_args["-w"])
-                sys.exit(3)
-        elif STATUS_CHECK == "active_shards_percent_as_number":
+        elif COMPARISON_TYPE == "int":
             try:
                 x_val = int(tmp_args["-w"])
 
@@ -288,55 +240,7 @@ else:
                     sys.exit(3)
                 else:
                     STATUS_CRIT = x_val
-        elif STATUS_CHECK == "initializing_shards":
-            try:
-                x_val = int(tmp_args["-c"])
-
-                if x_val < 0:
-                    print("Negative values? Really?")
-                    sys.exit(3)
-                else:
-                    STATUS_CRIT = x_val
-            except ValueError:
-                print("%s is not valid." % tmp_args["-c"])
-                sys.exit(3)
-        elif STATUS_CHECK == "number_of_data_nodes":
-            try:
-                x_val = int(tmp_args["-c"])
-
-                if x_val < 0:
-                    print("Negative values? Really?")
-                    sys.exit(3)
-                else:
-                    STATUS_CRIT = x_val
-            except ValueError:
-                print("%s is not valid." % tmp_args["-c"])
-                sys.exit(3)
-        elif STATUS_CHECK == "number_of_nodes":
-            try:
-                x_val = int(tmp_args["-c"])
-
-                if x_val < 0:
-                    print("Negative values? Really?")
-                    sys.exit(3)
-                else:
-                    STATUS_CRIT = x_val
-            except ValueError:
-                print("%s is not valid." % tmp_args["-c"])
-                sys.exit(3)
-        elif STATUS_CHECK == "heap_used_percent":
-            try:
-                x_val = int(tmp_args["-c"])
-
-                if x_val < 0:
-                    print("Negative values? Really?")
-                    sys.exit(3)
-                else:
-                    STATUS_CRIT = x_val
-            except ValueError:
-                print("%s is not valid." % tmp_args["-c"])
-                sys.exit(3)
-        elif STATUS_CHECK == "active_shards_percent_as_number":
+        elif COMPARISON_TYPE == "int":
             try:
                 x_val = int(tmp_args["-c"])
 
