@@ -57,7 +57,7 @@ def check_es_help():
     print("\t-w: warning value (dependent upon status).")
     print("\t-c: critical value (dependent upon status).")
     print("\t-C: Comparison type: <,<=,>,>=,!=,== . This is ignored if -x is status.")
-    print("\t-a: Elasticsearch server to connect to. Default localhost.")
+    print("\t-H: Elasticsearch server to connect to. Default localhost.")
     print("\t-p: Elasticsearch server HTTP port. Default 9200.")
     print("\t-h / --help: Prints out this help document.")
     print("Note: -x, -w, -c are required.")
@@ -264,27 +264,27 @@ else:
             print("%s is an invalid comparison operator; only >,>=,<,<=,==,!= are supported")
             sys.exit(3)
 
-    # setup -a
-    if "-a" in tmp_args:
+    # setup -H
+    if "-H" in tmp_args:
         bad_host_count = 0
 
         # check if IP
         try:
-            ipaddress.ip_address(tmp_args["-a"].decode("utf-8"))
+            ipaddress.ip_address(tmp_args["-H"].decode("utf-8"))
         except ValueError:
             bad_host_count += 1
 
         # check if host
         try:
-            socket.gethostbyname(tmp_args["-a"])
+            socket.gethostbyname(tmp_args["-H"])
         except socket.gaierror:
             bad_host_count += 1
 
         if bad_host_count > 1:
-            print("Invalid IP/hostname %s" % tmp_args["-a"])
+            print("Invalid IP/hostname %s" % tmp_args["-H"])
             sys.exit(3)
 
-        IP_HOSTNAME = tmp_args["-a"]
+        IP_HOSTNAME = tmp_args["-H"]
         NODE_HOSTNAME = IP_HOSTNAME
 
     # setup -p
