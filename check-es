@@ -104,10 +104,10 @@ def start(data):
 
 def check_status(value):
     if value == STATUS_WARN:
-        print("WARNING: %s has failed with status %s." % (STATUS_CHECK, STATUS_WARN))
+        print("WARNING: %s is %s." % (STATUS_CHECK, STATUS_WARN))
         sys.exit(1)
     elif value == STATUS_CRIT:
-        print("CRITICAL: %s has failed with status %s." % (STATUS_CHECK, STATUS_WARN))
+        print("CRITICAL: %s is %s." % (STATUS_CHECK, STATUS_WARN))
         sys.exit(2)
 
     print("OK: %s is ok: %s" % (STATUS_CHECK,value))
