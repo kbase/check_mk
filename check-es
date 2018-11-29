@@ -52,16 +52,15 @@ STATUS_CRIT     = ""
 NODE_HOSTNAME   = "_local"
 
 def check_es_help():
-    print("Usage: check-es -x <status> -w <warn> -c <crit> [options]")
+    print("Usage: check-es -x <status> [-w <warn> -c <crit>] [options]")
     print("Options:")
-    print("\t-x: The status to check; supported values are: status, initializing_shards, number_of_data_nodes, number_of_nodes, heap_used_percent, active_shards_percent_as_number")
-    print("\t-w: warning value (dependent upon status, use yellow for -x status).")
-    print("\t-c: critical value (dependent upon status, use red for -x status).")
+    print("\t-x: The status to check; supported values are: status, initializing_shards, number_of_data_nodes, number_of_nodes, heap_used_percent, active_shards_percent_as_number (default -x status)")
+    print("\t-w: warning value (dependent upon status, required for all but -x status).")
+    print("\t-c: critical value (dependent upon status, required for all but -x status).")
     print("\t-C: Comparison type: <,<=,>,>=,!=,== . Ignored if -x is status.")
     print("\t-H: Elasticsearch server to connect to. Default localhost.")
     print("\t-p: Elasticsearch server HTTP port. Default 9200.")
     print("\t-h / --help: Prints out this help document.")
-    print("Note: -x, -w, -c are required.")
     print("Version: 1.2.0")
 
 def init_data():
@@ -172,135 +171,124 @@ if "--help" in sys.argv or "-h" in sys.argv:
     sys.exit(0)
 
 # setup check
-if "-x" not in sys.argv or "-w" not in sys.argv or "-c" not in sys.argv:
-    print("-x, -w, and -c are required")
-    sys.exit(3)
+if "-x" not in sys.argv:
+    tmp_args["-x"] = "status"
+
+tmp_args = sys.argv[1:]
+tmp_args = dict([(tmp_args[i],tmp_args[i+1]) for i,b in enumerate(tmp_args[1:]) if i % 2 == 0])
+
+# setup -x
+if tmp_args["-x"] == "status" or tmp_args["-x"] == "initializing_shards" or tmp_args["-x"] == "number_of_data_nodes" or tmp_args["-x"] == "number_of_nodes" or tmp_args["-x"] == "heap_used_percent" or tmp_args["-x"] == "active_shards_percent_as_number":
+    STATUS_CHECK = tmp_args["-x"]
+
+    if tmp_args["-x"] == "status":
+        COMPARISON_TYPE = "str"
+    elif tmp_args["-x"] == "initializing_shards":
+        COMPARISON_TYPE = "int"
+    elif tmp_args["-x"] == "number_of_data_nodes":
+        COMPARISON_TYPE = "int"
+    elif tmp_args["-x"] == "number_of_nodes":
+        COMPARISON_TYPE = "int"
+    elif tmp_args["-x"] == "heap_used_percent":
+        NODE_MODE = True
+        COMPARISON_TYPE = "int"
+    elif tmp_args["-x"] == "active_shards_percent_as_number":
+        COMPARISON_TYPE = "int"
+
 else:
-    tmp_args = sys.argv[1:]
-    tmp_args = dict([(tmp_args[i],tmp_args[i+1]) for i,b in enumerate(tmp_args[1:]) if i % 2 == 0])
+    print("%s is not supported; see help." % (tmp_args["-x"]) )
+    sys.exit(3)
 
-    # setup -x
-    if tmp_args["-x"] == "status" or tmp_args["-x"] == "initializing_shards" or tmp_args["-x"] == "number_of_data_nodes" or tmp_args["-x"] == "number_of_nodes" or tmp_args["-x"] == "heap_used_percent" or tmp_args["-x"] == "active_shards_percent_as_number":
-        STATUS_CHECK = tmp_args["-x"]
+# setup -w
+try:
+    if STATUS_CHECK == "status":
+        STATUS_WARN = 'yellow'
+    elif COMPARISON_TYPE == "int":
+        if "-w" not in sys.argv:
+            print("-w required")
+            sys.exit(3)
+        try:
+            x_val = int(tmp_args["-w"])
 
-        if tmp_args["-x"] == "status":
-            COMPARISON_TYPE = "str"
-        elif tmp_args["-x"] == "initializing_shards":
-            COMPARISON_TYPE = "int"
-        elif tmp_args["-x"] == "number_of_data_nodes":
-            COMPARISON_TYPE = "int"
-        elif tmp_args["-x"] == "number_of_nodes":
-            COMPARISON_TYPE = "int"
-        elif tmp_args["-x"] == "heap_used_percent":
-            NODE_MODE = True
-            COMPARISON_TYPE = "int"
-        elif tmp_args["-x"] == "active_shards_percent_as_number":
-            COMPARISON_TYPE = "int"
-
-    else:
-        print("%s is not supported; see help." % (tmp_args["-x"]) )
-        sys.exit(3)
-
-    # setup -w
-    try:
-        if STATUS_CHECK == "status":
-            x_val = str(tmp_args["-w"])
-
-            if tmp_args["-w"] != "red" and tmp_args["-w"] != "yellow":
-                print("Invalid warning for %s." % (STATUS_CHECK))
+            if x_val < 0:
+                print("Negative values? Really?")
                 sys.exit(3)
             else:
                 STATUS_WARN = x_val
-        elif COMPARISON_TYPE == "int":
-            try:
-                x_val = int(tmp_args["-w"])
-
-                if x_val < 0:
-                    print("Negative values? Really?")
-                    sys.exit(3)
-                else:
-                    STATUS_WARN = x_val
-            except ValueError:
+        except ValueError:
                 print("%s is not valid." % tmp_args["-w"])
                 sys.exit(3)
 
     except Exception as e:
         print(e)
 
-    # setup -c
-    try:
-        if STATUS_CHECK == "status":
-            x_val = str(tmp_args["-c"])
+# setup -c
+try:
+    if STATUS_CHECK == "status":
+        STATUS_CRIT = 'red'
+    elif COMPARISON_TYPE == "int":
+        if "-c" not in sys.argv:
+            print("-c required")
+            sys.exit(3)
+        try:
+            x_val = int(tmp_args["-c"])
 
-            if tmp_args["-c"] != "red" and tmp_args["-c"] != "yellow":
-                print("Invalid critical for %s." % (STATUS_CHECK))
+            if x_val < 0:
+                print("Negative values? Really?")
                 sys.exit(3)
             else:
-                if tmp_args["-w"] == tmp_args["-c"]:
-                    print("You cant warn and crit at the same time!")
-                    sys.exit(3)
-                else:
-                    STATUS_CRIT = x_val
-        elif COMPARISON_TYPE == "int":
-            try:
-                x_val = int(tmp_args["-c"])
-
-                if x_val < 0:
-                    print("Negative values? Really?")
-                    sys.exit(3)
-                else:
-                    STATUS_CRIT = x_val
-            except ValueError:
-                print("%s is not valid." % tmp_args["-c"])
-                sys.exit(3)
-    except Exception as e:
-        print(e)
-
-
-    # setup -C
-    if "-C" in tmp_args:
-        if tmp_args["-C"] == "<=" or tmp_args["-C"] == "<" or tmp_args["-C"] == ">" or tmp_args["-C"] == ">=" or tmp_args["-C"] == "==" or tmp_args["-C"] == "!=":
-            COMPARISON_OP = tmp_args["-C"]
-        else:
-            print("%s is an invalid comparison operator; only >,>=,<,<=,==,!= are supported")
-            sys.exit(3)
-
-    # setup -H
-    if "-H" in tmp_args:
-        bad_host_count = 0
-
-        # check if IP
-        try:
-            ipaddress.ip_address(tmp_args["-H"].decode("utf-8"))
+                STATUS_CRIT = x_val
         except ValueError:
-            bad_host_count += 1
-
-        # check if host
-        try:
-            socket.gethostbyname(tmp_args["-H"])
-        except socket.gaierror:
-            bad_host_count += 1
-
-        if bad_host_count > 1:
-            print("Invalid IP/hostname %s" % tmp_args["-H"])
+            print("%s is not valid." % tmp_args["-c"])
             sys.exit(3)
+except Exception as e:
+    print(e)
 
-        IP_HOSTNAME = tmp_args["-H"]
-        NODE_HOSTNAME = IP_HOSTNAME
 
-    # setup -p
-    if "-p" in tmp_args:
-        try:
-            int(tmp_args["-p"])
+# setup -C
+if "-C" in tmp_args:
+    if tmp_args["-C"] == "<=" or tmp_args["-C"] == "<" or tmp_args["-C"] == ">" or tmp_args["-C"] == ">=" or tmp_args["-C"] == "==" or tmp_args["-C"] == "!=":
+        COMPARISON_OP = tmp_args["-C"]
+    else:
+        print("%s is an invalid comparison operator; only >,>=,<,<=,==,!= are supported")
+        sys.exit(3)
 
-            if int(tmp_args["-p"]) < 1 or int(tmp_args["-p"]) > 65535:
-                print("%s is not a valid port." % tmp_args["-p"])
-                sys.exit(3)
+# setup -H
+if "-H" in tmp_args:
+    bad_host_count = 0
 
-            IP_PORT = int(tmp_args["-p"])
-        except ValueError:
+    # check if IP
+    try:
+        ipaddress.ip_address(tmp_args["-H"].decode("utf-8"))
+    except ValueError:
+        bad_host_count += 1
+
+    # check if host
+    try:
+        socket.gethostbyname(tmp_args["-H"])
+    except socket.gaierror:
+        bad_host_count += 1
+
+    if bad_host_count > 1:
+        print("Invalid IP/hostname %s" % tmp_args["-H"])
+        sys.exit(3)
+
+    IP_HOSTNAME = tmp_args["-H"]
+    NODE_HOSTNAME = IP_HOSTNAME
+
+# setup -p
+if "-p" in tmp_args:
+    try:
+        int(tmp_args["-p"])
+
+        if int(tmp_args["-p"]) < 1 or int(tmp_args["-p"]) > 65535:
             print("%s is not a valid port." % tmp_args["-p"])
             sys.exit(3)
+
+        IP_PORT = int(tmp_args["-p"])
+    except ValueError:
+        print("%s is not a valid port." % tmp_args["-p"])
+        sys.exit(3)
 
 data = init_data()
 start(data)
