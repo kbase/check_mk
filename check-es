@@ -219,8 +219,8 @@ try:
                 print("%s is not valid." % tmp_args["-w"])
                 sys.exit(3)
 
-    except Exception as e:
-        print(e)
+except Exception as e:
+    print(e)
 
 # setup -c
 try:
