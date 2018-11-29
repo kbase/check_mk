@@ -1,0 +1,381 @@
+#!/usr/bin/python
+# check-es.py (v1.1.3)
+#   Switches:
+#     -x (required): status; status, number_of_nodes, etc.
+#     -w (required): warning value
+#     -c (required): critical value
+#     -C (optional): comparison operator: >, >=, <, <=, ==, !=; default ==
+#     -a (optional): IP/hostname; default localhost
+#     -p (optional): port; default 9200
+#     -h / --help (optional): help
+#
+#    Dependencies: ipaddress
+#
+#    check-es - Polls an Elasticsearch cluster for stats
+#    Copyright (C) 2017 bbb31ade7ba4103469003954b0838a96ac40b96cfc7d4c891cd34140d4849fc3
+#
+#    originally from https://github.com/bbb31/check-es
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#
+
+try:
+    import httplib
+except ImportError as e:
+    import http.client as httplib
+
+import json
+import sys
+import socket
+import ipaddress
+
+COMPARISON_TYPE = "str"
+COMPARISON_OP   = "=="
+IP_HOSTNAME     = "localhost"
+IP_PORT         = 9200
+STATUS_CHECK    = ""
+STATUS_WARN     = ""
+STATUS_CRIT     = ""
+NODE_HOSTNAME   = "_local"
+
+def check_es_help():
+    print("Usage: check-es -x <status> -w <warn> -c <crit> [options]")
+    print("Options:")
+    print("\t-x: The status to check; supported values are: status, initializing_shards, number_of_data_nodes, number_of_nodes, heap_used_percent")
+    print("\t-w: warning value (dependent upon status).")
+    print("\t-c: critical value (dependent upon status).")
+    print("\t-C: Comparison type: <,<=,>,>=,!=,== . This is ignored if -x is status.")
+    print("\t-a: Elasticsearch server to connect to. Default localhost.")
+    print("\t-p: Elasticsearch server HTTP port. Default 9200.")
+    print("\t-h / --help: Prints out this help document.")
+    print("Note: -x, -w, -c are required.")
+    print("Version: 1.1.3")
+
+def init_data():
+    try:
+      http_conn = httplib.HTTPConnection(IP_HOSTNAME, IP_PORT)
+      http_conn.request("GET", "/_cluster/health")
+      health_data = json.loads(http_conn.getresponse().read())
+
+      http_conn.request("GET", "/_nodes/%s/stats/jvm" % NODE_HOSTNAME)
+      node_data = json.loads(http_conn.getresponse().read())
+
+      http_conn.close()
+
+      return (health_data, node_data)
+    except socket.error:
+      print("CRITICAL: %s is not responding." % IP_HOSTNAME)
+      sys.exit(2)
+
+def start(data):
+    health_data = data[0]
+    node_data = data[1]
+
+    if STATUS_CHECK == "status":
+        check_status(health_data["status"])
+    elif STATUS_CHECK == "initializing_shards":
+        int_checker(health_data["initializing_shards"])
+    elif STATUS_CHECK == "number_of_data_nodes":
+        int_checker(health_data["number_of_data_nodes"])
+    elif STATUS_CHECK == "number_of_nodes":
+        int_checker(health_data["number_of_nodes"])
+    elif STATUS_CHECK == "heap_used_percent":
+        # Verify data set just incase
+        if len(node_data["nodes"]) > 0:
+            node_id_key = node_data["nodes"].keys()[0]
+            int_checker(node_data["nodes"][node_id_key]["jvm"]["mem"]["heap_used_percent"])
+        else:
+            print("CRITICAL: Unable to retrieve nodes list from %s. Is it down?" % NODE_HOSTNAME)
+            sys.exit(2)
+
+def check_status(value):
+    if value == STATUS_WARN:
+        print("WARNING: %s has failed with %s." % (STATUS_CHECK, STATUS_WARN))
+        sys.exit(1)
+    elif value == STATUS_CRIT:
+        print("CRITICAL: %s has failed with %s." % (STATUS_CHECK, STATUS_WARN))
+        sys.exit(2)
+
+    print("OK: %s is ok: %s" % (STATUS_CHECK,value))
+    sys.exit(0)
+
+def int_checker(value):
+    if COMPARISON_OP == "==":
+        if value == int(STATUS_CRIT):
+            print("CRITICAL: %s is == %s" % (STATUS_CHECK, STATUS_CRIT))
+            sys.exit(1)
+        elif value == int(STATUS_WARN):
+            print("WARNING: %s is == %s" % (STATUS_CHECK, STATUS_WARN))
+            sys.exit(2)
+
+        print("OK: %s is ok: %s" % (STATUS_CHECK,value))
+        sys.exit(0)
+    elif COMPARISON_OP == "!=":
+        if value != int(STATUS_CRIT):
+            print("CRITICAL: %s is != %s" % (STATUS_CHECK, STATUS_CRIT))
+            sys.exit(1)
+        elif value != int(STATUS_WARN):
+            print("WARNING: %s is != %s" % (STATUS_CHECK, STATUS_WARN))
+            sys.exit(2)
+
+        print("OK: %s is ok: %s" % (STATUS_CHECK,value))
+        sys.exit(0)
+    elif COMPARISON_OP == "<=":
+        if value <= int(STATUS_CRIT):
+            print("CRITICAL: %s is <= %s" % (STATUS_CHECK, STATUS_CRIT))
+            sys.exit(1)
+        elif value <= int(STATUS_WARN):
+            print("WARNING: %s is <= %s" % (STATUS_CHECK, STATUS_WARN))
+            sys.exit(2)
+
+        print("OK: %s is ok: %s" % (STATUS_CHECK,value))
+        sys.exit(0)
+    elif COMPARISON_OP == "<":
+        if value < int(STATUS_CRIT):
+            print("CRITICAL: %s is < %s" % (STATUS_CHECK, STATUS_CRIT))
+            sys.exit(1)
+        elif value < int(STATUS_WARN):
+            print("WARNING: %s is < %s" % (STATUS_CHECK, STATUS_WARN))
+            sys.exit(2)
+
+        print("OK: %s is ok: %s" % (STATUS_CHECK,value))
+        sys.exit(0)
+    elif COMPARISON_OP == ">":
+        if value > int(STATUS_CRIT):
+            print("CRITICAL: %s is > %s" % (STATUS_CHECK, STATUS_CRIT))
+            sys.exit(1)
+        elif value > int(STATUS_WARN):
+            print("WARNING: %s is > %s" % (STATUS_CHECK, STATUS_WARN))
+            sys.exit(2)
+
+        print("OK: %s is ok: %s" % (STATUS_CHECK,value))
+        sys.exit(0)
+    elif COMPARISON_OP == ">=":
+        if value >= int(STATUS_CRIT):
+            print("CRITICAL: %s is >= %s" % (STATUS_CHECK, STATUS_CRIT))
+            sys.exit(1)
+        elif value >= int(STATUS_WARN):
+            print("WARNING: %s is >= %s" % (STATUS_CHECK, STATUS_WARN))
+            sys.exit(2)
+
+        print("OK: %s is ok: %s" % (STATUS_CHECK,value))
+        sys.exit(0)
+
+# help
+if "--help" in sys.argv or "-h" in sys.argv:
+    check_es_help()
+    sys.exit(0)
+
+# setup check
+if "-x" not in sys.argv or "-w" not in sys.argv or "-c" not in sys.argv:
+    print("-x, -w, and -c are required")
+    sys.exit(1)
+else:
+    tmp_args = sys.argv[1:]
+    tmp_args = dict([(tmp_args[i],tmp_args[i+1]) for i,b in enumerate(tmp_args[1:]) if i % 2 == 0])
+
+    # setup -x
+    if tmp_args["-x"] == "status" or tmp_args["-x"] == "initializing_shards" or tmp_args["-x"] == "number_of_data_nodes" or tmp_args["-x"] == "number_of_nodes" or tmp_args["-x"] == "heap_used_percent":
+        STATUS_CHECK = tmp_args["-x"]
+
+        if tmp_args["-x"] == "status":
+            COMPARISON_TYPE = "str"
+        elif tmp_args["-x"] == "initializing_shards":
+            COMPARISON_TYPE = "int"
+        elif tmp_args["-x"] == "number_of_data_nodes":
+            COMPARISON_TYPE = "int"
+        elif tmp_args["-x"] == "number_of_nodes":
+            COMPARISON_TYPE = "int"
+        elif tmp_args["-x"] == "heap_used_percent":
+            NODE_MODE = True
+            COMPARISON_TYPE = "int"
+    else:
+        print("%s is not supported; see help." % (tmp_args["-x"]) )
+        sys.exit(1)
+
+    # setup -w
+    try:
+        if STATUS_CHECK == "status":
+            x_val = str(tmp_args["-w"])
+
+            if tmp_args["-w"] != "red" and tmp_args["-w"] != "yellow":
+                print("Invalid warning for %s." % (STATUS_CHECK))
+                sys.exit(1)
+            else:
+                STATUS_WARN = x_val
+        elif STATUS_CHECK == "initializing_shards":
+            try:
+                x_val = int(tmp_args["-w"])
+
+                if x_val < 0:
+                    print("Negative values? Really?")
+                    sys.exit(1)
+                else:
+                    STATUS_WARN = x_val
+            except ValueError:
+                print("%s is not valid." % tmp_args["-w"])
+                sys.exit(1)
+        elif STATUS_CHECK == "number_of_data_nodes":
+            try:
+                x_val = int(tmp_args["-w"])
+
+                if x_val < 0:
+                    print("Negative values? Really?")
+                    sys.exit(1)
+                else:
+                    STATUS_WARN = x_val
+            except ValueError:
+                print("%s is not valid." % tmp_args["-w"])
+                sys.exit(1)
+        elif STATUS_CHECK == "number_of_nodes":
+            try:
+                x_val = int(tmp_args["-w"])
+
+                if x_val < 0:
+                    print("Negative values? Really?")
+                    sys.exit(1)
+                else:
+                    STATUS_WARN = x_val
+            except ValueError:
+                print("%s is not a valid." % tmp_args["-w"])
+                sys.exit(1)
+        elif STATUS_CHECK == "heap_used_percent":
+            try:
+                x_val = int(tmp_args["-w"])
+
+                if x_val < 0:
+                    print("Negative values? Really?")
+                    sys.exit(1)
+                else:
+                    STATUS_WARN = x_val
+            except ValueError:
+                print("%s is not valid." % tmp_args["-w"])
+                sys.exit(1)
+    except Exception as e:
+        print(e)
+
+    # setup -c
+    try:
+        if STATUS_CHECK == "status":
+            x_val = str(tmp_args["-c"])
+
+            if tmp_args["-c"] != "red" and tmp_args["-c"] != "yellow":
+                print("Invalid critical for %s." % (STATUS_CHECK))
+                sys.exit(1)
+            else:
+                if tmp_args["-w"] == tmp_args["-c"]:
+                    print("You cant warn and crit at the same time!")
+                    sys.exit(1)
+                else:
+                    STATUS_CRIT = x_val
+        elif STATUS_CHECK == "initializing_shards":
+            try:
+                x_val = int(tmp_args["-c"])
+
+                if x_val < 0:
+                    print("Negative values? Really?")
+                    sys.exit(1)
+                else:
+                    STATUS_CRIT = x_val
+            except ValueError:
+                print("%s is not valid." % tmp_args["-c"])
+                sys.exit(1)
+        elif STATUS_CHECK == "number_of_data_nodes":
+            try:
+                x_val = int(tmp_args["-c"])
+
+                if x_val < 0:
+                    print("Negative values? Really?")
+                    sys.exit(1)
+                else:
+                    STATUS_CRIT = x_val
+            except ValueError:
+                print("%s is not valid." % tmp_args["-c"])
+                sys.exit(1)
+        elif STATUS_CHECK == "number_of_nodes":
+            try:
+                x_val = int(tmp_args["-c"])
+
+                if x_val < 0:
+                    print("Negative values? Really?")
+                    sys.exit(1)
+                else:
+                    STATUS_CRIT = x_val
+            except ValueError:
+                print("%s is not valid." % tmp_args["-c"])
+                sys.exit(1)
+        elif STATUS_CHECK == "heap_used_percent":
+            try:
+                x_val = int(tmp_args["-c"])
+
+                if x_val < 0:
+                    print("Negative values? Really?")
+                    sys.exit(1)
+                else:
+                    STATUS_CRIT = x_val
+            except ValueError:
+                print("%s is not valid." % tmp_args["-c"])
+                sys.exit(1)
+    except Exception as e:
+        print(e)
+
+
+    # setup -C
+    if "-C" in tmp_args:
+        if tmp_args["-C"] == "<=" or tmp_args["-C"] == "<" or tmp_args["-C"] == ">" or tmp_args["-C"] == ">=" or tmp_args["-C"] == "==" or tmp_args["-C"] == "!=":
+            COMPARISON_OP = tmp_args["-C"]
+        else:
+            print("%s is an invalid comparison operator; only >,>=,<,<=,==,!= are supported")
+            sys.exit(1)
+
+    # setup -a
+    if "-a" in tmp_args:
+        bad_host_count = 0
+
+        # check if IP
+        try:
+            ipaddress.ip_address(tmp_args["-a"].decode("utf-8"))
+        except ValueError:
+            bad_host_count += 1
+
+        # check if host
+        try:
+            socket.gethostbyname(tmp_args["-a"])
+        except socket.gaierror:
+            bad_host_count += 1
+
+        if bad_host_count > 1:
+            print("Invalid IP/hostname %s" % tmp_args["-a"])
+            sys.exit(1)
+
+        IP_HOSTNAME = tmp_args["-a"]
+        NODE_HOSTNAME = IP_HOSTNAME
+
+    # setup -p
+    if "-p" in tmp_args:
+        try:
+            int(tmp_args["-p"])
+
+            if int(tmp_args["-p"]) < 1 or int(tmp_args["-p"]) > 65535:
+                print("%s is not a valid port." % tmp_args["-p"])
+                sys.exit(1)
+
+            IP_PORT = int(tmp_args["-p"])
+        except ValueError:
+            print("%s is not a valid port." % tmp_args["-p"])
+            sys.exit(1)
+
+data = init_data()
+start(data)
