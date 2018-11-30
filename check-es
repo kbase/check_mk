@@ -1,17 +1,17 @@
 #!/usr/bin/python
-# check-es.py (v1.1.3)
+# check-es
 #   Switches:
-#     -x (required): status; status, number_of_nodes, etc.
-#     -w (required): warning value
-#     -c (required): critical value
+#     -x: status; status, number_of_nodes, etc., default status
+#     -w (required unless -x status): warning value
+#     -c (required unless -x status): critical value
 #     -C (optional): comparison operator: >, >=, <, <=, ==, !=; default ==
-#     -a (optional): IP/hostname; default localhost
+#     -H (optional): IP/hostname; default localhost
 #     -p (optional): port; default 9200
 #     -h / --help (optional): help
 #
 #    Dependencies: ipaddress
 #
-#    check-es - Polls an Elasticsearch cluster for stats
+#    check-es - Polls an Elasticsearch cluster node for stats
 #    Copyright (C) 2017 bbb31ade7ba4103469003954b0838a96ac40b96cfc7d4c891cd34140d4849fc3
 #    Copyright (C) 2018 KBase
 #
