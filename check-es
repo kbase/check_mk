@@ -150,11 +150,11 @@ def int_checker(cluster_name, value):
 
     if state == 3:
         state=0
-        stateText=("OK: %s is ok: %s" % (STATUS_CHECK,value))
+        stateText=("OK: cluster %s %s is ok: %s" % (cluster_name, STATUS_CHECK,value))
     if state == 2:
-        stateText=("CRITICAL: %s is %d which is %s %s" % (STATUS_CHECK, value, COMPARISON_OP, STATUS_CRIT))
+        stateText=("CRITICAL: cluster %s %s is %d which is %s %s" % (cluster_name, STATUS_CHECK, value, COMPARISON_OP, STATUS_CRIT))
     if state == 1:
-        stateText=("WARNING: %s is %d which is %s %s" % (STATUS_CHECK, value, COMPARISON_OP, STATUS_WARN))
+        stateText=("WARNING: cluster %s %s is %d which is %s %s" % (cluster_name, STATUS_CHECK, value, COMPARISON_OP, STATUS_WARN))
 
     print stateText
     sys.exit(state)
