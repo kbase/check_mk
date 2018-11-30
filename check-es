@@ -101,7 +101,7 @@ def check_status(cluster_name, value):
         print("WARNING: cluster %s %s is %s." % (cluster_name, STATUS_CHECK, STATUS_WARN))
         sys.exit(1)
     elif value == STATUS_CRIT:
-        print("CRITICAL: cluster %s %s is %s." % (cluster_name, STATUS_CHECK, STATUS_WARN))
+        print("CRITICAL: cluster %s %s is %s." % (cluster_name, STATUS_CHECK, STATUS_CRIT))
         sys.exit(2)
 
     print("OK: cluster %s %s is ok: %s" % (cluster_name, STATUS_CHECK,value))
