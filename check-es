@@ -94,7 +94,7 @@ def start(data):
             print("CRITICAL: Unable to retrieve nodes list from %s. Is it down?" % NODE_HOSTNAME)
             sys.exit(2)
     else:
-        int_checker(health_data["cluster_name"],health_data["STATUS_CHECK"])
+        int_checker(health_data["cluster_name"],health_data[STATUS_CHECK])
 
 def check_status(cluster_name, value):
     if value == STATUS_WARN:
