@@ -66,7 +66,9 @@ def check_es_help():
 def init_data():
     try:
       http_conn = httplib.HTTPConnection(IP_HOSTNAME, IP_PORT)
-      http_conn.request("GET", "/_cluster/health?wait_for_status=green&timeout=10s")
+    # not really sure what wait for status we want here, I really just want the timeout
+    # I think the status is "at least this level" so maybe red means just wait for 10s
+      http_conn.request("GET", "/_cluster/health?wait_for_status=red&timeout=10s")
       health_data = json.loads(http_conn.getresponse().read())
 
       http_conn.request("GET", "/_nodes/%s/stats/jvm" % NODE_HOSTNAME)
