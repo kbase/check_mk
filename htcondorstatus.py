@@ -207,11 +207,11 @@ for job in jobs:
 # bail if token==unknown
 # curl -s -H "Authorization: token" https://kbase.us/services/auth/me
 # if Unauthorized, then alert; print job id, slot, acctgroup
-	headers = {'authorization': token}
-	r = requests.get(authUrl, headers=headers)
+#	headers = {'authorization': token}
+#	r = requests.get(authUrl, headers=headers)
 # in this block, add jobs to a list?  then alert later if list length > 0?
-	if r.status_code != 200:
-		expiredTokenJobsList.append(str(job['ClusterId']) + ' (running) ' + job['RemoteHost'] + ' ' + jobname + ' ' +acctgroup)
+#	if r.status_code != 200:
+#		expiredTokenJobsList.append(str(job['ClusterId']) + ' (running) ' + job['RemoteHost'] + ' ' + jobname + ' ' +acctgroup)
 
 	jobRunningTime = (job['ServerTime'] - job['JobCurrentStartDate'])/60
 	if jobRunningTime > maxRunningTime:
@@ -244,10 +244,10 @@ for job in jobs:
 
 # report idle jobs with expired tokens
 # moving to here to make it easier to bypass if needed
-	headers = {'authorization': token}
-	r = requests.get(authUrl, headers=headers)
-	if r.status_code != 200:
-		expiredTokenJobsList.append(str(job['ClusterId']) + ' (idle) ' + acctgroup)
+#	headers = {'authorization': token}
+#	r = requests.get(authUrl, headers=headers)
+#	if r.status_code != 200:
+#		expiredTokenJobsList.append(str(job['ClusterId']) + ' (idle) ' + acctgroup)
 
 
 # these do not properly capture the longest jobs
