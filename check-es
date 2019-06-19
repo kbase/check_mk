@@ -164,7 +164,7 @@ def int_checker(cluster_name, value):
         if STATUS_CHECK == "heap_used_percent":
             stateText=("WARNING: node %s is %d which is %s %s" % (STATUS_CHECK, value, COMPARISON_OP, STATUS_WARN))
 
-    print stateText
+    print (stateText)
     sys.exit(state)
 
 # help
