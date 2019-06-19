@@ -90,7 +90,7 @@ def start(data):
     elif STATUS_CHECK == "heap_used_percent":
         # Verify data set just incase
         if len(node_data["nodes"]) > 0:
-            node_id_key = node_data["nodes"].keys()[0]
+            node_id_key = list(node_data["nodes"].keys())[0]
             int_checker(health_data["cluster_name"],node_data["nodes"][node_id_key]["jvm"]["mem"]["heap_used_percent"])
         else:
             print("CRITICAL: Unable to retrieve nodes list from %s. Is it down?" % NODE_HOSTNAME)
