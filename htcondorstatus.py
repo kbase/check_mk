@@ -25,7 +25,11 @@ configfile=sys.argv[1]
 conf=configparser.ConfigParser()
 conf.read(configfile)
 #print conf.sections()
-authUrl='https://kbase.us/services/auth/me'
+try:
+	authUrl=conf['global']['authUrl']
+except:
+	authUrl='https://kbase.us/services/auth/me'
+#print authUrl
 
 #collector = htcondor.Collector('host:9618')
 collector = htcondor.Collector()
@@ -177,7 +181,7 @@ for job in jobs:
     except:
 	jobname=job['GlobalJobId']
     try:
-	acctgroup=job['AcctGroup']
+	acctgroup=job['AccountingGroup']
     except:
 	acctgroup='undefined'
     try:
