@@ -29,16 +29,22 @@ r1=$(mysql -h$mysqlhost -P$port -u$mysqluser -p$password -B -N -e "show status l
 
 if [ $r1 -le $warn ]; then
   ST_FINAL=${ST_FINAL-$ST_OK}
-  echo "$ST_FINAL mysql_galera_threads - OK - number of threads = $r1"
+  ST_TEXT = 'OK'
+#  echo "$ST_FINAL mysql_galera_threads - OK - number of threads = $r1"
 elif [ $r1 -gt $crit ]; then
   ST_FINAL=$ST_CR
-  echo "$ST_FINAL mysql_galera_threads - CRITICAL - number of threads = $r1"
+  ST_TEXT = 'CRITICAL'
+#  echo "$ST_FINAL mysql_galera_threads - CRITICAL - number of threads = $r1"
 elif [ $r1 -gt $warn ]; then
   ST_FINAL=${ST_FINAL-$ST_WR}
-  echo "$ST_FINAL mysql_galera_threads - WARNING - number of threads = $r1"
+  ST_TEXT = 'WARNING'
+#  echo "$ST_FINAL mysql_galera_threads - WARNING - number of threads = $r1"
 else
   ST_FINAL=${ST_FINAL-$ST_UK}
-  echo "$ST_FINAL mysql_galera_threads - UNKNOWN - $ST_UK"
+  ST_TEXT = 'UNKNOWN'
+#  echo "$ST_FINAL mysql_galera_threads - UNKNOWN - $ST_UK"
 fi
+
+echo "$ST_FINAL mysql_galera_threads - $ST_TEXT - number of threads = $r1 |threads=$r1;$warn;$crit"
 
 exit $ST_FINAL
