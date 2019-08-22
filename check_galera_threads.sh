@@ -1,6 +1,7 @@
 #!/bin/bash
 
 mysqlhost='localhost'
+port=3306
 mysqluser=$(grep user /root/.my.cnf|cut -f2 -d '=')		
 password=$(grep password /root/.my.cnf|cut -f2 -d '=')
 
