@@ -1,8 +1,5 @@
 #!/bin/bash
 
-warn=100
-crit=130
-
 mysqlhost='localhost'
 port=3306
 mysqluser=$(grep user /root/.my.cnf|cut -f2 -d '=')		
@@ -12,6 +9,21 @@ ST_OK=0
 ST_WR=1
 ST_CR=2
 ST_UK=3
+
+while getopts “hvu:p:H:P:w:c:f:0” OPTION; do
+  case $OPTION in
+    w)
+      warn=$OPTARG
+      ;;
+    c)
+      crit=$OPTARG
+      ;;
+    ?)
+      echo "Unknown argument: $1"
+      exit $ST_UK
+      ;;
+  esac
+done
 
 r1=$(mysql -h$mysqlhost -P$port -u$mysqluser -p$password -B -N -e "show status like 'Threads_connected'"|cut -f 2)
 
