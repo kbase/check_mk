@@ -45,6 +45,6 @@ else
 #  echo "$ST_FINAL mysql_galera_threads - UNKNOWN - $ST_UK"
 fi
 
-echo "$ST_FINAL mysql_galera_threads - $ST_TEXT number of threads = $r1 |threads=$r1;$warn;$crit"
+echo "$ST_FINAL mysql_threads - $ST_TEXT number of threads = $r1 |threads=$r1;$warn;$crit"
 
 exit $ST_FINAL
