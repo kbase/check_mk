@@ -47,24 +47,24 @@ else
 fi
 
 if [ $r2 -le $warn ]; then
-  ST_FINAL=${ST_FINAL-$ST_OK}
-  ST_TEXT='OK'
+  ST2_FINAL=${ST2_FINAL-$ST_OK}
+  ST2_TEXT='OK'
 #  echo "$ST_FINAL mysql_galera_threads - OK - number of threads = $r1"
 elif [ $r2 -gt $crit ]; then
-  ST_FINAL=$ST_CR
-  ST_TEXT='CRITICAL'
+  ST2_FINAL=$ST_CR
+  ST2_TEXT='CRITICAL'
 #  echo "$ST_FINAL mysql_galera_threads - CRITICAL - number of threads = $r1"
 elif [ $r2 -gt $warn ]; then
-  ST_FINAL=${ST_FINAL-$ST_WR}
-  ST_TEXT='WARNING'
+  ST2_FINAL=${ST2_FINAL-$ST_WR}
+  ST2_TEXT='WARNING'
 #  echo "$ST_FINAL mysql_galera_threads - WARNING - number of threads = $r1"
 else
-  ST_FINAL=${ST_FINAL-$ST_UK}
-  ST_TEXT='UNKNOWN'
+  ST2_FINAL=${ST2_FINAL-$ST_UK}
+  ST2_TEXT='UNKNOWN'
 #  echo "$ST_FINAL mysql_galera_threads - UNKNOWN - $ST_UK"
 fi
 
 echo "$ST_FINAL mysql_threads - $ST_TEXT number of threads = $r1 |threads=$r1;$warn;$crit"
-echo "$ST_FINAL mysql_max_threads - $ST_TEXT max number of threads = $r2 |threads=$r2;$warn;$crit"
+echo "$ST2_FINAL mysql_max_threads - $ST2_TEXT max number of threads = $r2 |threads=$r2;$warn;$crit"
 
 exit $ST_FINAL
