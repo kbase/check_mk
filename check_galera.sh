@@ -123,7 +123,7 @@ if [ -z "$r3" ]; then
 fi
 
 if [ $(echo "$r3 > $fcp" | bc) = 1 ]; then
-  extra_text="wsrep_flow_control_paused is > $fcp"
+  extra_text="wsrep_flow_control_paused is $r3 > $fcp"
   ST_FINAL=$ST_WR
 fi
 
