@@ -115,51 +115,56 @@ r4=$(mysql -h$mysqlhost -P$port -u$mysqluser -p$password -B -N -e "show status l
 r5=$(mysql -h$mysqlhost -P$port -u$mysqluser -p$password -B -N -e "show status like 'wsrep_connected'"|cut -f 2)  # ON
 r6=$(mysql -h$mysqlhost -P$port -u$mysqluser -p$password -B -N -e "show status like 'wsrep_local_state_comment'"|cut -f 2)  # Synced
 
+extra_text=""
 
 if [ -z "$r3" ]; then
-  echo "UNKNOWN: wsrep_flow_control_paused is empty"
+  extra_text="wsrep_flow_control_paused is empty"
   ST_FINAL=$ST_UK
 fi
 
 if [ $(echo "$r3 > $fcp" | bc) = 1 ]; then
-  echo "WARNING: wsrep_flow_control_paused is > $fcp"
+  extra_text="wsrep_flow_control_paused is > $fcp"
+  ST_FINAL=$ST_WR
+fi
+
+if [ "$r6" != 'Synced' ]; then
+  extra_text="node is not synced"
   ST_FINAL=$ST_WR
 fi
 
 if [ "$primary" = 'TRUE' ]; then
   if [ "$r2" != 'Primary' ]; then
-    echo "CRITICAL: node is not primary"
+    extra_text="node is not primary"
     ST_FINAL=$ST_CR
   fi
 fi
 
 if [ "$r4" != 'ON' ]; then
-  echo "CRITICAL: node is not ready"
+  extra_text="node is not ready"
   ST_FINAL=$ST_CR
 fi
 
 if [ "$r5" != 'ON' ]; then
-  echo "CRITICAL: node is not connected"
+  extra_text="node is not connected"
   ST_FINAL=$ST_CR
 fi
 
-if [ "$r6" != 'Synced' ]; then
-  echo "CRITICAL: node is not synced"
-  ST_FINAL=$ST_CR
-fi
+state_text="UNKNOWN"
 
 if [ $r1 -gt $warn ]; then
   ST_FINAL=${ST_FINAL-$ST_OK}
-  echo "$ST_FINAL mysql_galera - OK - number of NODES = $r1"
+  state_text="$ST_FINAL mysql_galera - OK - number of NODES = $r1"
 elif [ $r1 -le $crit ]; then
   ST_FINAL=$ST_CR
-  echo "$ST_FINAL mysql_galera - CRITICAL - number of NODES = $r1"
+  state_text="$ST_FINAL mysql_galera - CRITICAL - number of NODES = $r1"
 elif [ $r1 -le $warn ]; then
   ST_FINAL=${ST_FINAL-$ST_WR}
-  echo "$ST_FINAL mysql_galera - WARNING - number of NODES = $r1"
+  state_text="$ST_FINAL mysql_galera - WARNING - number of NODES = $r1"
 else
   ST_FINAL=${ST_FINAL-$ST_UK}
-  echo "$ST_FINAL mysql_galera - UNKNOWN - $ST_UK"
+  state_text="$ST_FINAL mysql_galera - UNKNOWN - $ST_UK"
 fi
+
+echo "$state_text $extra_text"
 
 exit $ST_FINAL
