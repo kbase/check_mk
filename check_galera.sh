@@ -44,7 +44,7 @@ crit=1
 warn=2
 port='3306'
 mysqlhost='localhost'
-fcp=0.2
+fcp=0.1
 
 while getopts “hvu:p:H:P:w:c:f:0” OPTION; do
   case $OPTION in
@@ -115,14 +115,15 @@ r4=$(mysql -h$mysqlhost -P$port -u$mysqluser -p$password -B -N -e "show status l
 r5=$(mysql -h$mysqlhost -P$port -u$mysqluser -p$password -B -N -e "show status like 'wsrep_connected'"|cut -f 2)  # ON
 r6=$(mysql -h$mysqlhost -P$port -u$mysqluser -p$password -B -N -e "show status like 'wsrep_local_state_comment'"|cut -f 2)  # Synced
 
+
 if [ -z "$r3" ]; then
   echo "UNKNOWN: wsrep_flow_control_paused is empty"
   ST_FINAL=$ST_UK
 fi
 
 if [ $(echo "$r3 > $fcp" | bc) = 1 ]; then
-  echo "CRITICAL: wsrep_flow_control_paused is > $fcp"
-  ST_FINAL=$ST_CR
+  echo "WARNING: wsrep_flow_control_paused is > $fcp"
+  ST_FINAL=$ST_WR
 fi
 
 if [ "$primary" = 'TRUE' ]; then
