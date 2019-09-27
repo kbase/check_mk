@@ -115,7 +115,7 @@ r4=$(mysql -h$mysqlhost -P$port -u$mysqluser -p$password -B -N -e "show status l
 r5=$(mysql -h$mysqlhost -P$port -u$mysqluser -p$password -B -N -e "show status like 'wsrep_connected'"|cut -f 2)  # ON
 r6=$(mysql -h$mysqlhost -P$port -u$mysqluser -p$password -B -N -e "show status like 'wsrep_local_state_comment'"|cut -f 2)  # Synced
 
-extra_text=""
+extra_text="no extra notes"
 
 if [ -z "$r3" ]; then
   extra_text="wsrep_flow_control_paused is empty"
