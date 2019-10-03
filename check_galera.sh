@@ -165,6 +165,6 @@ else
   state_text="$ST_FINAL mysql_galera - UNKNOWN - $ST_UK"
 fi
 
-echo "$state_text ( $extra_text )"
+echo "$state_text ( $extra_text ) |fcpaused=$r3;$fcp;$fcp"
 
 exit $ST_FINAL
