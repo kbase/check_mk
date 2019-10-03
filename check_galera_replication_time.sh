@@ -32,9 +32,9 @@ print_help() {
   echo "  P)"
   echo "    MySQL port. Default is $port."
   echo "  w)"
-  echo "    Sets minimum number of minutes of replication time when WARNING is raised. (default is $warn)."
+  echo "    Sets minimum minutes (as a float) of replication time when WARNING is raised. (default is $warn)."
   echo "  c)"
-  echo "    Sets minimum number of minutes of replication time when CRITICAL is raised. (default is $crit)."
+  echo "    Sets minimum minutes (as a float) of replication time when CRITICAL is raised. (default is $crit)."
   exit $ST_UK
 }
 
