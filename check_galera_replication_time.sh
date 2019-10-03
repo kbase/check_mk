@@ -3,6 +3,9 @@ PROGNAME=`basename $0`
 VERSION="Version 1.0,"
 AUTHOR="Guillaume Coré <g@fridim.org>, Keith Keller <kkeller@lbl.gov>"
 
+### THIS SCRIPT RUNS FOR AT LEAST ONE MINUTE!
+### If using with check_mk be sure to have it cache results for at least five minutes.
+
 ST_OK=0
 ST_WR=1
 ST_CR=2
@@ -17,7 +20,7 @@ print_help() {
   echo ""
   echo "$PROGNAME is a Nagios plugin to monitor Galera cluster status."
   echo ""
-  echo "$PROGNAME -u USER -p PASSWORD [-H HOST] [-P PORT] [-w MINUTES] [-c MINUTES]"
+  echo "$PROGNAME -u USER -p PASSWORD [-H HOST] [-P PORT] [-w FLOAT] [-c FLOAT]"
   echo ""
   echo "Options:"
   echo "  u)"
