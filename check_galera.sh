@@ -45,7 +45,7 @@ warn=2
 port='3306'
 mysqlhost='localhost'
 fcpwarn=0.1
-fcpcrit=0.2
+fcpcrit=0.15
 
 while getopts “hvu:p:H:P:w:c:f:0” OPTION; do
   case $OPTION in
