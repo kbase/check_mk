@@ -65,6 +65,7 @@ else
 fi
 
 echo "$ST_FINAL mysql_threads - $ST_TEXT number of threads = $r1 |threads=$r1;$warn;$crit"
-echo "$ST2_FINAL mysql_max_threads - $ST2_TEXT max number of threads = $r2 |threads=$r2;$warn;$crit"
+# not really ready yet
+#echo "$ST2_FINAL mysql_max_threads - $ST2_TEXT max number of threads = $r2 |threads=$r2;$warn;$crit"
 
 exit $ST_FINAL
