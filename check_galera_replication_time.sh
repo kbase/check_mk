@@ -17,7 +17,7 @@ print_help() {
   echo ""
   echo "$PROGNAME is a Nagios plugin to monitor Galera cluster status."
   echo ""
-  echo "$PROGNAME -u USER -p PASSWORD [-H HOST] [-P PORT] [-w SIZE] [-c SIZE] [-f FLOAT] [-0]"
+  echo "$PROGNAME -u USER -p PASSWORD [-H HOST] [-P PORT] [-w MINUTES] [-c MINUTES]"
   echo ""
   echo "Options:"
   echo "  u)"
