@@ -45,6 +45,8 @@ warn=2
 port='3306'
 mysqlhost='localhost'
 fcp=0.1
+fcpwarn=0.1
+fcpcrit=0.2
 
 while getopts “hvu:p:H:P:w:c:f:0” OPTION; do
   case $OPTION in
@@ -122,9 +124,12 @@ if [ -z "$r3" ]; then
   ST_FINAL=$ST_UK
 fi
 
-if [ $(echo "$r3 > $fcp" | bc) = 1 ]; then
+if [ $(echo "$r3 > $fcpwarn" | bc) = 1 ]; then
   extra_text="wsrep_flow_control_paused is $r3 > $fcp"
   ST_FINAL=$ST_WR
+  if [ $(echo "$r3 > $fcpcrit" | bc) = 1 ]; then
+    ST_FINAL=$ST_CR
+  fi
 fi
 
 if [ "$r6" != 'Synced' ]; then
@@ -165,6 +170,6 @@ else
   state_text="$ST_FINAL mysql_galera - UNKNOWN - $ST_UK"
 fi
 
-echo "$state_text ( $extra_text ) |fcpaused=$r3;$fcp;$fcp"
+echo "$state_text ( $extra_text ) |fcpaused=$r3;$fcpwarn;$fcpcrit"
 
 exit $ST_FINAL
