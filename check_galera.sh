@@ -33,7 +33,7 @@ print_help() {
   echo "  c)"
   echo "    Sets minimum number of nodes in the cluster when CRITICAL is raised. (default is 2)."
   echo "  f)"
-  echo "    Sets critical value of wsrep_flow_control_paused (default is 0.1)."
+  echo "    Sets critical value of wsrep_flow_control_paused (default is $fcpcrit)."
   echo "  0)"
   echo "    Rise CRITICAL if the node is not primary"
   exit $ST_UK
@@ -44,7 +44,6 @@ crit=1
 warn=2
 port='3306'
 mysqlhost='localhost'
-fcp=0.1
 fcpwarn=0.1
 fcpcrit=0.2
 
@@ -77,7 +76,7 @@ while getopts “hvu:p:H:P:w:c:f:0” OPTION; do
       crit=$OPTARG
       ;;
     f)
-      fcp=$OPTARG
+      fcpcrit=$OPTARG
       ;;
     0)
       primary='TRUE'
