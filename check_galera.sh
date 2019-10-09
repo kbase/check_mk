@@ -123,6 +123,9 @@ if [ -z "$r3" ]; then
   ST_FINAL=$ST_UK
 fi
 
+# this gets confused if mysql returns a value in scientific notation
+# (e.g., 6.36039e-05)
+# not sure if it's worth worrying about
 if [ $(echo "$r3 > $fcpwarn" | bc) = 1 ]; then
   extra_text="wsrep_flow_control_paused is $r3 > $fcp"
   ST_FINAL=$ST_WR
