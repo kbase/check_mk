@@ -18,7 +18,7 @@ print_version() {
 print_help() {
   print_version $PROGNAME $VERSION
   echo ""
-  echo "$PROGNAME is a Nagios plugin to monitor Galera cluster status."
+  echo "$PROGNAME is a Nagios plugin to monitor an estimate of how long the gcache will last."
   echo ""
   echo "### $PROGNAME runs for at least one minute! ###"
   echo "### Be sure to set timeouts appropriately. ###"
