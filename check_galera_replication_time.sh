@@ -103,7 +103,7 @@ if [ -z "$password" ]; then
   exit $ST_UK
 fi
 
-r1=$(mysql -h$mysqlhost -P$port -u$mysqluser -p$password -B -N -e "SET @start := (SELECT SUM(VARIABLE_VALUE/1024/1024) FROM information_schema.global_status WHERE VARIABLE_NAME LIKE 'WSREP%bytes'); do sleep(60); SET @end := (SELECT SUM(VARIABLE_VALUE/1024/1024) FROM information_schema.global_status WHERE VARIABLE_NAME LIKE 'WSREP%bytes'); SET @gcache := (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(@@GLOBAL.wsrep_provider_options,'gcache.size = ',-1), 'M', 1)); COALESCE(SELECT ROUND(@gcache/round((@end - @start),2),2),0)") # time to full
+r1=$(mysql -h$mysqlhost -P$port -u$mysqluser -p$password -B -N -e "SET @start := (SELECT SUM(VARIABLE_VALUE/1024/1024) FROM information_schema.global_status WHERE VARIABLE_NAME LIKE 'WSREP%bytes'); do sleep(60); SET @end := (SELECT SUM(VARIABLE_VALUE/1024/1024) FROM information_schema.global_status WHERE VARIABLE_NAME LIKE 'WSREP%bytes'); SET @gcache := (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(@@GLOBAL.wsrep_provider_options,'gcache.size = ',-1), 'M', 1)); SELECT COALESCE(ROUND(@gcache/round((@end - @start),2),2),0)") # time to full
 
 state_text="UNKNOWN"
 
