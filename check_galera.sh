@@ -172,6 +172,6 @@ else
   state_text="$ST_FINAL mysql_galera - UNKNOWN - $ST_UK"
 fi
 
-echo "$state_text ( $extra_text ) |fcpaused=$r3;$fcpwarn;$fcpcrit"
+echo "$state_text ( $extra_text ) |fcpaused=$fcpvalue;$fcpwarn;$fcpcrit"
 
 exit $ST_FINAL
