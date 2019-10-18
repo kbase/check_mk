@@ -125,7 +125,7 @@ fi
 
 # this gets confused if mysql returns a value in scientific notation
 # (e.g., 6.36039e-05)
-fcpvalue = $(printf "%.12f" $r3)
+fcpvalue=$(printf "%.12f" $r3)
 if [ $(echo "$fcpvalue > $fcpwarn" | bc) = 1 ]; then
   extra_text="wsrep_flow_control_paused is $fcpvalue > $fcp"
   ST_FINAL=$ST_WR
