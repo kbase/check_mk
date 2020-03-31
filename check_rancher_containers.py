@@ -48,7 +48,7 @@ stackData=stackReq.json()['data']
 try:
 	stackId = [i for i,j in enumerate(stackData) if j['name'] == stackname][0]
 except:
-	# assume no stack data
+	# assume no stack data; this is bad and need better handling
 	sys.exit(0)
 
 for serviceId in stackData[stackId]['serviceIds']:
