@@ -45,7 +45,12 @@ stackReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/stacks/', auth=(us
 stackData=stackReq.json()['data']
 
 # assume there's only one
-stackId = [i for i,j in enumerate(stackData) if j['name'] == stackname][0]
+try:
+	stackId = [i for i,j in enumerate(stackData) if j['name'] == stackname][0]
+except:
+	# assume no stack data
+	sys.exit(0)
+
 for serviceId in stackData[stackId]['serviceIds']:
 #	print serviceId
 # in that stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
