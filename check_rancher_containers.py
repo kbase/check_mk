@@ -6,11 +6,16 @@ import argparse
 import configparser
 
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
-parser.add_argument('--config-file', required=True,
+parser.add_argument('--config-file', dest='configfile', required=True,
 		    help='Path to config file (INI format).')
-parser.add_argument('--config-section', required=True,
+parser.add_argument('--config-section', dest='section', required=True,
 		    help='Section in config file to use.')
 args = parser.parse_args()
+
+configfile=args.configfile
+conf=configparser.ConfigParser()
+conf.read(configfile)
+print conf.sections()
 
 # should use configparse with ini files
 
