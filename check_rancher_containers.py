@@ -95,8 +95,8 @@ def process_section(conf, section):
 
 # in each service find the last logs?  may be hard, need websocket
 
-print (args.section)
+#print (args.section)
 for section in args.section:
-	print (section)
+#	print (section)
 	process_section(conf, section)
 
