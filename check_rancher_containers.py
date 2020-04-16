@@ -4,6 +4,7 @@ import sys
 import requests
 import argparse
 import configparser
+import json
 
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
 parser.add_argument('--config-file', dest='configfile', required=True,
@@ -29,7 +30,7 @@ password=conf[args.section]['rancher_secretkey']
 
 # look for these services (remaining cmdline args)
 #monitoredServices = sys.argv[7:]
-monitoredServices = conf.get(args.section,'service_list')
+monitoredServices = json.loads(conf.get(args.section,'service_list'))
 print (monitoredServices)
 
 session=requests.Session()
