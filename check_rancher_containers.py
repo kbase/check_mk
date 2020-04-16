@@ -31,6 +31,7 @@ password=conf[args.section]['rancher_secretkey']
 
 # look for these services (remaining cmdline args)
 #monitoredServices = sys.argv[7:]
+monitoredServices = []
 
 session=requests.Session()
 hostsReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/hosts/', auth=(username,password))
