@@ -61,19 +61,19 @@ for serviceId in stackData[stackId]['serviceIds']:
 #	print serviceId
 # in that stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
 	serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
-        svc=serviceReq.json()
+	svc=serviceReq.json()
 	if svc['name'] in monitoredServices:
-            serviceState = 3
-            serviceStateTxt = 'UNKNOWN'
+		serviceState = 3
+		serviceStateTxt = 'UNKNOWN'
 
-            if svc['healthState'] == 'healthy':
-		serviceState = 0
-                serviceStateTxt = 'OK'
-            if svc['healthState'] == 'unhealthy':
-		serviceState = 2
-                serviceStateTxt = 'CRITICAL'
+		if svc['healthState'] == 'healthy':
+			serviceState = 0
+                	serviceStateTxt = 'OK'
+		if svc['healthState'] == 'unhealthy':
+			serviceState = 2
+                	serviceStateTxt = 'CRITICAL'
 
-            print (str(serviceState) + ' ' + envname + '_' + stackname + '_' + svc['name'] + ' - ' + serviceStateTxt + ' running instances: ' + str(svc['currentScale']))
+		print (str(serviceState) + ' ' + envname + '_' + stackname + '_' + svc['name'] + ' - ' + serviceStateTxt + ' running instances: ' + str(svc['currentScale']))
 #	    print svc['healthState']
 
 
