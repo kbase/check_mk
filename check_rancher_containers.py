@@ -100,7 +100,6 @@ if args.sections:
 else:
 	sections = conf.sections()
 
-print sections
 for section in sections:
 #	print (section)
 	process_section(conf, section)
