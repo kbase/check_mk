@@ -3,13 +3,17 @@
 import sys
 import requests
 import argparse
+import configparser
 
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
-parser.add_argument('--rancher_url', required=True,
-		    help='The Rancher API URL.')
+parser.add_argument('--config-file', required=True,
+		    help='Path to config file (INI format).')
+parser.add_argument('--config-section', required=True,
+		    help='Section in config file to use.')
 args = parser.parse_args()
 
-# should use argparse
+# should use configparse with ini files
+
 # include the port if needed
 urlbase=sys.argv[1]
 # would be better to use envname and query the api to find envid
