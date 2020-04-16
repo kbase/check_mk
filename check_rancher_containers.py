@@ -34,7 +34,7 @@ def process_section(conf, section):
 
 # look for these services (a JSON-formatted list, requires double-quotes around strings)
 	try:
-		monitoredServices = json.loads(conf.get(args.section,'service_list'))
+		monitoredServices = json.loads(conf.get(section,'service_list'))
 	except:
 		monitoredServices = []
 	#print (monitoredServices)
