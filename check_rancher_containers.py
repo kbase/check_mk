@@ -20,17 +20,17 @@ print (conf.sections())
 # should use configparse with ini files
 
 # include the port if needed
-urlbase=sys.argv[1]
+urlbase=conf[args.section]['rancher_url']
 # would be better to use envname and query the api to find envid
 # but the envid should seldom if ever change so getting on cmdline ok
-envid=sys.argv[2]
-envname=sys.argv[3]
-stackname=sys.argv[4]
-username=sys.argv[5]
-password=sys.argv[6]
+envid=conf[args.section]['rancher_envid']
+envname=conf[args.section]['rancher_envname']
+stackname=conf[args.section]['rancher_stackname']
+username=conf[args.section]['rancher_accesskey']
+password=conf[args.section]['rancher_secretkey']
 
 # look for these services (remaining cmdline args)
-monitoredServices = sys.argv[7:]
+#monitoredServices = sys.argv[7:]
 
 session=requests.Session()
 hostsReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/hosts/', auth=(username,password))
