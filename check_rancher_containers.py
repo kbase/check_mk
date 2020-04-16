@@ -5,7 +5,7 @@ import requests
 import argparse
 
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
-parser.add_argument('rancher_url',
+parser.add_argument('--rancher_url', required=True,
 		    help='The Rancher API URL.')
 args = parser.parse_args()
 
