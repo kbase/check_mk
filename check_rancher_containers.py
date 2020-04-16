@@ -15,7 +15,7 @@ args = parser.parse_args()
 configfile=args.configfile
 conf=configparser.ConfigParser()
 conf.read(configfile)
-print conf.sections()
+print (conf.sections())
 
 # should use configparse with ini files
 
