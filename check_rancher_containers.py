@@ -68,10 +68,10 @@ for serviceId in stackData[stackId]['serviceIds']:
 
 		if svc['healthState'] == 'healthy':
 			serviceState = 0
-                	serviceStateTxt = 'OK'
+			serviceStateTxt = 'OK'
 		if svc['healthState'] == 'unhealthy':
 			serviceState = 2
-                	serviceStateTxt = 'CRITICAL'
+			serviceStateTxt = 'CRITICAL'
 
 		print (str(serviceState) + ' ' + envname + '_' + stackname + '_' + svc['name'] + ' - ' + serviceStateTxt + ' running instances: ' + str(svc['currentScale']))
 #	    print svc['healthState']
