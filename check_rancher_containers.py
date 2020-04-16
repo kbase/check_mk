@@ -15,9 +15,7 @@ args = parser.parse_args()
 configfile=args.configfile
 conf=configparser.ConfigParser()
 conf.read(configfile)
-print (conf.sections())
-
-# should use configparse with ini files
+#print (conf.sections())
 
 # include the port if needed
 urlbase=conf[args.section]['rancher_url']
@@ -31,7 +29,8 @@ password=conf[args.section]['rancher_secretkey']
 
 # look for these services (remaining cmdline args)
 #monitoredServices = sys.argv[7:]
-monitoredServices = []
+monitoredServices = conf.get(args.section,'service_list')
+print (monitoredServices)
 
 session=requests.Session()
 hostsReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/hosts/', auth=(username,password))
