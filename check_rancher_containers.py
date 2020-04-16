@@ -9,8 +9,8 @@ import json
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
 parser.add_argument('--config-file', dest='configfile', required=True,
 		    help='Path to config file (INI format).')
-parser.add_argument('--config-section', dest='section', required=True, nargs='+',
-		    help='Section in config file to use.')
+parser.add_argument('--config-sections', dest='sections', nargs='*',
+		    help='Section(s) in config file to use. (default to all sections in config file)')
 args = parser.parse_args()
 
 configfile=args.configfile
@@ -91,12 +91,16 @@ def process_section(conf, section):
 
 			print (str(serviceState) + ' ' + envname + '_' + stackname + '_' + svc['name'] + ' - ' + serviceStateTxt + ' running instances: ' + str(svc['currentScale']))
 	#	    print svc['healthState']
-
-
 # in each service find the last logs?  may be hard, need websocket
 
+# main loop
+# if args provided, use them, otherwise use sections from config file
+try:
+	sections = args.sections
+except:
+	sections = conf.sections()
 #print (args.section)
-for section in args.section:
+for section in sections:
 #	print (section)
 	process_section(conf, section)
 
