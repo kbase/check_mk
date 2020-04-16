@@ -96,10 +96,11 @@ def process_section(conf, section):
 # main loop
 # if args provided, use them, otherwise use sections from config file
 #print(conf.sections())
+sections = conf.sections()
 try:
 	sections = args.sections
 except:
-	sections = conf.sections()
+	pass
 
 print sections
 for section in sections:
