@@ -30,7 +30,8 @@ password=conf[args.section]['rancher_secretkey']
 
 # look for these services (remaining cmdline args)
 #monitoredServices = sys.argv[7:]
-monitoredServices = json.loads(conf.get(args.section,'service_list'))
+monitoredServices = conf.get(args.section,'service_list')
+#monitoredServices = json.loads(conf.get(args.section,'service_list'))
 print (monitoredServices)
 
 session=requests.Session()
