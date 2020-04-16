@@ -18,8 +18,7 @@ conf=configparser.ConfigParser()
 conf.read(configfile)
 #print (conf.sections())
 
-for section in args.section:
-	process_section(conf, section)
+# skip to end for loop that processes each section
 
 def process_section(conf, section):
 
@@ -95,4 +94,7 @@ def process_section(conf, section):
 
 
 # in each service find the last logs?  may be hard, need websocket
+
+for section in args.section:
+	process_section(conf, section)
 
