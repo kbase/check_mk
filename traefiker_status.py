@@ -1,9 +1,11 @@
 import requests
-import os
+import sys
 
-url="https://ci.kbase.us/narrative_status/"
+url=sys.argv[1]
+token=sys.argv[2]
+
 cookies = dict()
-cookies['kbase_session'] = os.environ.get('KB_AUTH_TOKEN')
+cookies['kbase_session'] = token
 
 req = requests.get(url , cookies=cookies)
 
