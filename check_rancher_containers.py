@@ -97,6 +97,7 @@ def process_section(conf, section):
 # if args provided, use them, otherwise use sections from config file
 print(conf.sections())
 sections = conf.sections()
+print sections
 try:
 	sections = args.sections
 except:
