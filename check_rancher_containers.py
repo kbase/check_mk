@@ -9,7 +9,7 @@ import json
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
 parser.add_argument('--config-file', dest='configfile', required=True,
 		    help='Path to config file (INI format).')
-parser.add_argument('--config-section', dest='section', required=True, count='+',
+parser.add_argument('--config-section', dest='section', required=True, nargs='+',
 		    help='Section in config file to use.')
 args = parser.parse_args()
 
