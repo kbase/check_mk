@@ -18,15 +18,20 @@ conf=configparser.ConfigParser()
 conf.read(configfile)
 #print (conf.sections())
 
+for section in args.section:
+	process_section(conf, section)
+
+def process_section(conf, section):
+
 # include the port if needed
-urlbase=conf[args.section]['rancher_url']
+urlbase=conf[section]['rancher_url']
 # would be better to use envname and query the api to find envid
 # but the envid should seldom if ever change so getting on cmdline ok
-envid=conf[args.section]['rancher_envid']
-envname=conf[args.section]['rancher_envname']
-stackname=conf[args.section]['rancher_stackname']
-username=conf[args.section]['rancher_accesskey']
-password=conf[args.section]['rancher_secretkey']
+envid=conf[section]['rancher_envid']
+envname=conf[section]['rancher_envname']
+stackname=conf[section]['rancher_stackname']
+username=conf[section]['rancher_accesskey']
+password=conf[section]['rancher_secretkey']
 
 # look for these services (a JSON-formatted list, requires double-quotes around strings)
 try:
