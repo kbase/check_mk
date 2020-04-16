@@ -28,11 +28,9 @@ stackname=conf[args.section]['rancher_stackname']
 username=conf[args.section]['rancher_accesskey']
 password=conf[args.section]['rancher_secretkey']
 
-# look for these services (remaining cmdline args)
-#monitoredServices = sys.argv[7:]
-#monitoredServices = conf.get(args.section,'service_list')
+# look for these services (a JSON-formatted list, requires double-quotes around strings)
 monitoredServices = json.loads(conf.get(args.section,'service_list'))
-print (monitoredServices)
+#print (monitoredServices)
 
 session=requests.Session()
 hostsReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/hosts/', auth=(username,password))
