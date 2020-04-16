@@ -95,7 +95,7 @@ def process_section(conf, section):
 
 # main loop
 # if args provided, use them, otherwise use sections from config file
-if len(args.sections) > 0:
+if args.sections:
 	sections = args.sections
 else:
 	sections = conf.sections()
