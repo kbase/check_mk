@@ -2,6 +2,12 @@
 
 import sys
 import requests
+import argparse
+
+parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
+parser.add_argument('rancher_url',
+		    help='The Rancher API URL.')
+args = parser.parse_args()
 
 # should use argparse
 # include the port if needed
