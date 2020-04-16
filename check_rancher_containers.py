@@ -29,7 +29,10 @@ username=conf[args.section]['rancher_accesskey']
 password=conf[args.section]['rancher_secretkey']
 
 # look for these services (a JSON-formatted list, requires double-quotes around strings)
-monitoredServices = json.loads(conf.get(args.section,'service_list'))
+try:
+	monitoredServices = json.loads(conf.get(args.section,'service_list'))
+except:
+	monitoredServices = []
 #print (monitoredServices)
 
 session=requests.Session()
