@@ -46,10 +46,13 @@ def process_section(conf, section):
 		except:
 			# bad state from traefiker, not handled yet
 			pass
-		if narrative['session_id'] != '*':
-			if sessions.has_key(narrative['session_id']):
-				print (session_id)
-			sessions[narrative['session_id']] = 1
+
+# this code in theory looks for users with multiple containers
+# but the status endpoint 500s in that situation anyway
+#		if narrative['session_id'] != '*':
+#			if sessions.has_key(narrative['session_id']):
+#				print (session_id)
+#			sessions[narrative['session_id']] = 1
 
 	print (counts)
 	print (warn)
