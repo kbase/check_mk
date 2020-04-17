@@ -1,5 +1,4 @@
 import requests
-import sys
 import configparser
 import argparse
 import json
@@ -20,8 +19,8 @@ conf.read(configfile)
 
 def process_section(conf, section):
 
-	url=sys.argv[1]
-	token=sys.argv[2]
+	url=conf[section]['traefik_status_url']
+	token=conf[section]['kbase_token']
 
 	cookies = dict()
 	cookies['kbase_session'] = token
