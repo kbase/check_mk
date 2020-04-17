@@ -26,8 +26,8 @@ def process_section(conf, section):
 	token=conf[section]['kbase_token']
 
 	counts = { 'total': 0 }
-	warn = { 'total': 0 }
-	crit = { 'total': 0 }
+	warn = {  }
+	crit = {  }
 	for state in container_states:
 		counts[state]=0
 		warn[state] = conf[section][state+'_warn']
