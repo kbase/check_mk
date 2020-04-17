@@ -62,19 +62,19 @@ def process_section(conf, section):
 #			sessions[narrative['session_id']] = 1
 
 	for state in container_states:
-		print (counts[state])
-		print (warn[state])
 		if counts[state] > crit[state]:
 			status[state] = 2
 		if counts[state] > warn[state]:
 			status[state] = 1
 		else:
 			status[state] = 0
+		print (str(status[state]) + ' traefiker_' + section + ' - ' + status_strings[status[state]] + ' hi ' )
 
-	print (counts)
-	print (warn)
-	print (crit)
-	print (status)
+
+#	print (counts)
+#	print (warn)
+#	print (crit)
+#	print (status)
 
 # main loop
 # if args provided, use them, otherwise use sections from config file
