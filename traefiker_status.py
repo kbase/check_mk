@@ -47,7 +47,8 @@ def process_section(conf, section):
 			# bad state from traefiker, not handled yet
 			pass
 		if narrative['session_id'] != '*':
-			print session_id if sessions.has_key(narrative['session_id'])
+			if sessions.has_key(narrative['session_id']):
+				print (session_id)
 			sessions[narrative['session_id']] = 1
 
 	print (counts)
