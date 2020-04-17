@@ -24,8 +24,9 @@ def process_section(conf, section):
 	# valid states we expect from traefiker
 	container_states = ['active','queued']
 
+	cookies = dict()
+	cookies['kbase_session'] = conf[section]['kbase_token']
 	url=conf[section]['traefiker_status_url']
-	token=conf[section]['kbase_token']
 
 	counts = { 'total': 0 }
 	warn = {  }
@@ -37,11 +38,9 @@ def process_section(conf, section):
 		crit[state] = int(conf[section][state+'_crit'])
 		status[state] = 3
 
-	cookies = dict()
-	cookies['kbase_session'] = token
-
 	req = requests.get(url , cookies=cookies)
 	if req.status_code != 200:
+# need to support this better
 		print('bad response')
 		return 2
 
@@ -72,6 +71,7 @@ def process_section(conf, section):
 
 # hardcoded states for now; currently this only checks that number of containers in expected state
 # equals the number of total containers reported
+# (total thresholds can be supported by adding total to container_states)
 	if (counts['active'] + counts['queued'] == counts['total']):
 		status['total'] = 0
 	else:
