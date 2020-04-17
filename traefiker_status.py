@@ -78,7 +78,7 @@ def process_section(conf, section):
 #	print (str(status['total']) + ' traefiker_' + section + '_total  - ' + status_strings[status['total']] + ' total containers = ' + str(counts['total']) )
 
 # want performance data here but not required
-	for state in status.keys():
+	for state in status.keys().sort():
 		print (str(status[state]) + ' traefiker_' + section + '_' + state + ' - ' + status_strings[status[state]] + ' ' + state + ' containers = ' + str(counts[state]) )
 
 #	print (counts)
