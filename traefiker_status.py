@@ -36,10 +36,10 @@ def process_section(conf, section):
 	cookies = dict()
 	cookies['kbase_session'] = token
 
-	try:
-		req = requests.get(url , cookies=cookies)
-	except:
+	req = requests.get(url , cookies=cookies)
+	if req.response_code != 200:
 		print('bad response')
+		return 2
 
 	sessions = {}
 	for narrative in req.json()['narrative_services']:
