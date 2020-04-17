@@ -31,7 +31,7 @@ def process_section(conf, section):
 	counts = { 'active': 0, 'queued': 0 , 'total': 0}
 
 	for narrative in req.json()['narrative_services']:
-    	counts['total'] += 1
+		counts['total'] += 1
 		if narrative['state'] == 'active':
 			counts['active'] += 1
 		if narrative['state'] == 'queued':
