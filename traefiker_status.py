@@ -37,7 +37,7 @@ def process_section(conf, section):
 	cookies['kbase_session'] = token
 
 	req = requests.get(url , cookies=cookies)
-	if req.response_code != 200:
+	if req.status_code != 200:
 		print('bad response')
 		return 2
 
