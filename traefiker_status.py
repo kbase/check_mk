@@ -19,6 +19,8 @@ conf.read(configfile)
 
 def process_section(conf, section):
 
+	status_strings = ['OK','WARNING','CRITICAL','UNKNOWN']
+
 	# valid states we expect from traefiker
 	container_states = ['active','queued']
 
@@ -28,10 +30,12 @@ def process_section(conf, section):
 	counts = { 'total': 0 }
 	warn = {  }
 	crit = {  }
+	status = { }
 	for state in container_states:
 		counts[state]=0
 		warn[state] = conf[section][state+'_warn']
 		crit[state] = conf[section][state+'_crit']
+		status[state] = 3
 
 	cookies = dict()
 	cookies['kbase_session'] = token
@@ -60,6 +64,7 @@ def process_section(conf, section):
 	print (counts)
 	print (warn)
 	print (crit)
+	print (status)
 
 # main loop
 # if args provided, use them, otherwise use sections from config file
