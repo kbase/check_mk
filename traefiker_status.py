@@ -38,6 +38,7 @@ def process_section(conf, section):
 
 	req = requests.get(url , cookies=cookies)
 
+	sessions = {}
 	for narrative in req.json()['narrative_services']:
 		counts['total'] += 1
 		try:
@@ -45,6 +46,9 @@ def process_section(conf, section):
 		except:
 			# bad state from traefiker, not handled yet
 			pass
+		if narrative['session_id'] != '*':
+			print session_id if sessions.has_key(narrative['session_id'])
+			sessions[narrative['session_id']] = 1
 
 	print (counts)
 	print (warn)
