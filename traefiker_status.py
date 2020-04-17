@@ -62,6 +62,8 @@ def process_section(conf, section):
 #			sessions[narrative['session_id']] = 1
 
 	for state in container_states:
+		print (counts[state])
+		print (warn[state])
 		if counts[state] > crit[state]:
 			status[state] = 2
 		if counts[state] > warn[state]:
