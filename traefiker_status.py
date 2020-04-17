@@ -36,7 +36,7 @@ def process_section(conf, section):
 	for narrative in req.json()['narrative_services']:
 		counts['total'] += 1
 		try:
-			counts[narrative[state]] += 1
+			counts[narrative['state']] += 1
 		except:
 			# bad state from traefiker, not handled yet
 			pass
