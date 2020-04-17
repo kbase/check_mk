@@ -33,8 +33,8 @@ def process_section(conf, section):
 	status = { }
 	for state in container_states:
 		counts[state]=0
-		warn[state] = conf[section][state+'_warn']
-		crit[state] = conf[section][state+'_crit']
+		warn[state] = int(conf[section][state+'_warn'])
+		crit[state] = int(conf[section][state+'_crit'])
 		status[state] = 3
 
 	cookies = dict()
