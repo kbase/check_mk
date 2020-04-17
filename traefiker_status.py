@@ -19,13 +19,14 @@ conf.read(configfile)
 
 def process_section(conf, section):
 
+	url=conf[section]['traefiker_status_url']
+	token=conf[section]['kbase_token']
+
+	# valid states we expect from traefiker
 	states = ['active','queued']
 	counts = { 'total': 0 }
 	for state in states:
 		counts[state]=0		
-
-	url=conf[section]['traefiker_status_url']
-	token=conf[section]['kbase_token']
 
 	cookies = dict()
 	cookies['kbase_session'] = token
@@ -35,7 +36,7 @@ def process_section(conf, section):
 	for narrative in req.json()['narrative_services']:
 		counts['total'] += 1
 		try:
-			counts[state] += 1
+			counts[narrative[state]] += 1
 		except:
 			# bad state from traefiker, not handled yet
 			pass
