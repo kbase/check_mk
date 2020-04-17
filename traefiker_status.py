@@ -68,7 +68,8 @@ def process_section(conf, section):
 			status[state] = 1
 		else:
 			status[state] = 0
-		print (str(status[state]) + ' traefiker_' + section + ' - ' + status_strings[status[state]] + ' hi ' )
+# want performance data here but not required
+		print (str(status[state]) + ' traefiker_' + section + '_' + state + ' - ' + status_strings[status[state]] + ' hi ' )
 
 
 #	print (counts)
