@@ -68,8 +68,6 @@ def process_section(conf, section):
 			status[state] = 1
 		else:
 			status[state] = 0
-# want performance data here but not required
-		print (str(status[state]) + ' traefiker_' + section + '_' + state + ' - ' + status_strings[status[state]] + ' ' + state + ' containers = ' + str(counts[state]) )
 #		print (str(state) + ' rancher_agent_' + host['hostname'] + ' - ' + stateText + ' host ' + host['hostname'] + ' running containers: ' + str(len(instanceData)))
 
 # hardcoded states for now
@@ -77,7 +75,11 @@ def process_section(conf, section):
 		status['total'] = 0
 	else:
 		status['total'] = 2
-	print (str(status['total']) + ' traefiker_' + section + '_total  - ' + status_strings[status['total']] + ' total containers = ' + str(counts['total']) )
+#	print (str(status['total']) + ' traefiker_' + section + '_total  - ' + status_strings[status['total']] + ' total containers = ' + str(counts['total']) )
+
+# want performance data here but not required
+	for state in keys(status):
+		print (str(status[state]) + ' traefiker_' + section + '_' + state + ' - ' + status_strings[status[state]] + ' ' + state + ' containers = ' + str(counts[state]) )
 
 #	print (counts)
 #	print (warn)
