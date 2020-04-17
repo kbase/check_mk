@@ -19,7 +19,7 @@ conf.read(configfile)
 
 def process_section(conf, section):
 
-	url=conf[section]['traefik_status_url']
+	url=conf[section]['traefiker_status_url']
 	token=conf[section]['kbase_token']
 
 	cookies = dict()
