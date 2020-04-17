@@ -69,7 +69,8 @@ def process_section(conf, section):
 		else:
 			status[state] = 0
 # want performance data here but not required
-		print (str(status[state]) + ' traefiker_' + section + '_' + state + ' - ' + status_strings[status[state]] + ' hi ' )
+		print (str(status[state]) + ' traefiker_' + section + '_' + state + ' - ' + status_strings[status[state]] + '  ' + state + ' containers = ' + str(count[state]) )
+#		print (str(state) + ' rancher_agent_' + host['hostname'] + ' - ' + stateText + ' host ' + host['hostname'] + ' running containers: ' + str(len(instanceData)))
 
 
 #	print (counts)
