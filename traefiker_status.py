@@ -35,7 +35,7 @@ def process_section(conf, section):
 		if narrative['state'] == 'active':
 			counts['active'] += 1
 		if narrative['state'] == 'queued':
-        	counts['queued'] += 1
+			counts['queued'] += 1
 
 	print (counts)
 
