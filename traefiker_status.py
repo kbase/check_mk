@@ -70,7 +70,8 @@ def process_section(conf, section):
 			status[state] = 0
 #		print (str(state) + ' rancher_agent_' + host['hostname'] + ' - ' + stateText + ' host ' + host['hostname'] + ' running containers: ' + str(len(instanceData)))
 
-# hardcoded states for now
+# hardcoded states for now; currently this only checks that number of containers in expected state
+# equals the number of total containers reported
 	if (counts['active'] + counts['queued'] == counts['total']):
 		status['total'] = 0
 	else:
