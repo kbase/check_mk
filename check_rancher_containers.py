@@ -6,6 +6,7 @@ import requests
 import argparse
 import configparser
 import json
+import docker
 
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
 parser.add_argument('--config-file', dest='configfile', required=True,
@@ -102,7 +103,11 @@ def process_section(conf, section):
 		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
 		rancherInstance=instanceReq.json()
 		if rancherInstance['hostId'] == hostid:
-			print (rancherInstance['name'])
+#			print (rancherInstance['name'])
+			dockerClient = docker.from_env()
+			dockerContainer = dockerClient.container.get('r-'+rancherInstance['name'])
+			print (dockerContainer.stats())
+
 #		rancherHostReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 #		if os.uname()[1] == 
 
