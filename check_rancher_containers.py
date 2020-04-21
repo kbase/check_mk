@@ -105,7 +105,7 @@ def process_section(conf, section):
 		if rancherInstance['hostId'] == hostid:
 #			print (rancherInstance['name'])
 			dockerClient = docker.from_env()
-			dockerContainer = dockerClient.container.get('r-'+rancherInstance['name'])
+			dockerContainer = dockerClient.containers.get('r-'+rancherInstance['name'])
 			print (dockerContainer.stats())
 
 #		rancherHostReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
