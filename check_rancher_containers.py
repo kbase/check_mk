@@ -96,7 +96,8 @@ def process_section(conf, section):
 # if on a host running containers, check their resources
 		rancherContainerReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 		rancherContainer=rancherContainerReq.json()
-		print(rancherContainer)
+# assume only one instance
+		print(rancherContainer['instanceIds'][0])
 #		rancherHostReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 #		if os.uname()[1] == 
 
