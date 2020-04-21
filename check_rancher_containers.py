@@ -32,6 +32,10 @@ def process_section(conf, section):
 	stackname=conf[section]['rancher_stackname']
 	username=conf[section]['rancher_accesskey']
 	password=conf[section]['rancher_secretkey']
+# also would be better to do a hostname lookup with os.uname()[1] and
+# compare to hostname in rancher data
+# but for now this is also ok
+	hostid=conf[section]['rancher_hostid']
 
 # look for these services (a JSON-formatted list, requires double-quotes around strings)
 	try:
@@ -97,7 +101,8 @@ def process_section(conf, section):
 # assume only one instance
 		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
 		rancherInstance=instanceReq.json()
-		print(rancherInstance['hostId'])
+		if rancherInstance['hostId'] == hostid:
+			print (rancherInstance['name'])
 #		rancherHostReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 #		if os.uname()[1] == 
 
