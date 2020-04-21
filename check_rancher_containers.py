@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import os
 import sys
 import requests
 import argparse
@@ -91,7 +92,17 @@ def process_section(conf, section):
 
 			print (str(serviceState) + ' ' + envname + '_' + stackname + '_' + svc['name'] + ' - ' + serviceStateTxt + ' running instances: ' + str(svc['currentScale']))
 	#	    print svc['healthState']
+
+# if on a host running containers, check their resources
+		rancherContainerReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
+		rancherContainer=rancherContainerReq.json()
+		print(rancherContainer)
+#		rancherHostReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
+#		if os.uname()[1] == 
+
+
 # in each service find the last logs?  may be hard, need websocket
+
 
 # main loop
 # if args provided, use them, otherwise use sections from config file
