@@ -94,10 +94,10 @@ def process_section(conf, section):
 	#	    print svc['healthState']
 
 # if on a host running containers, check their resources
-		rancherContainerReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
-		rancherContainer=rancherContainerReq.json()
 # assume only one instance
-		print(rancherContainer['instanceIds'][0])
+		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
+		rancherInstance=instanceReq.json()
+		print(rancherInstance['hostId'])
 #		rancherHostReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 #		if os.uname()[1] == 
 
