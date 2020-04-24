@@ -108,7 +108,8 @@ def process_section(conf, section):
 #			print (rancherInstance['name'])
 			dockerClient = docker.from_env()
 			dockerContainer = dockerClient.containers.get(rancherInstance['externalId'])
-			print (svc['name'] + ' ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']))
+# need to put this into check_mk format (and make only one line of output for all containers)
+#			print (svc['name'] + ' ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']))
 
 #		rancherHostReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 #		if os.uname()[1] == 
