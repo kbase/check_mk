@@ -36,6 +36,7 @@ def process_section(conf, section):
 # also would be better to do a hostname lookup with os.uname()[1] and
 # compare to hostname in rancher data
 # but for now this is also ok
+	hostid=None
 	if conf.has_option(section,'rancher_hostid'):
 		hostid=conf[section]['rancher_hostid']
 
