@@ -36,7 +36,7 @@ def process_section(conf, section):
 # also would be better to do a hostname lookup with os.uname()[1] and
 # compare to hostname in rancher data
 # but for now this is also ok
-	if conf[section].has_key('rancher_hostid'):
+	if conf.has_option(section,'rancher_hostid'):
 		hostid=conf[section]['rancher_hostid']
 
 # look for these services (a JSON-formatted list, requires double-quotes around strings)
