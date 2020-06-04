@@ -75,6 +75,8 @@ def process_section(conf, section):
 	stackData=stackReq.json()['data']
 
 # assume there's only one
+	print (stackData)
+	stackId='none'
 	try:
 		stackId = [i for i,j in enumerate(stackData) if j['name'] == stackname][0]
 	except:
@@ -82,7 +84,7 @@ def process_section(conf, section):
 		sys.exit(0)
 
 	for serviceId in stackData[stackId]['serviceIds']:
-	#	print serviceId
+	#	print (serviceId)
 # in that stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
 		serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 		svc=serviceReq.json()
