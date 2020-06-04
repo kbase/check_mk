@@ -104,9 +104,10 @@ def process_section(conf, section):
 
 # if on a host running containers, check their resources
 # assume only one instance
-		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
-		rancherInstance=instanceReq.json()
-		if rancherInstance['hostId'] == hostid:
+# broken?
+#		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
+#		rancherInstance=instanceReq.json()
+#		if rancherInstance['hostId'] == hostid:
 #			print (rancherInstance['name'])
 			dockerClient = docker.from_env()
 			dockerContainer = dockerClient.containers.get(rancherInstance['externalId'])
