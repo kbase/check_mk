@@ -109,8 +109,8 @@ def process_section(conf, section):
 #		rancherInstance=instanceReq.json()
 #		if rancherInstance['hostId'] == hostid:
 #			print (rancherInstance['name'])
-			dockerClient = docker.from_env()
-			dockerContainer = dockerClient.containers.get(rancherInstance['externalId'])
+#			dockerClient = docker.from_env()
+#			dockerContainer = dockerClient.containers.get(rancherInstance['externalId'])
 # need to put this into check_mk format (and make only one line of output for all containers)
 #			print (svc['name'] + ' ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']))
 
