@@ -75,7 +75,7 @@ def process_section(conf, section):
 	stackData=stackReq.json()['data']
 
 # assume there's only one
-	print (stackData)
+#	print (stackData)
 	stackId='none'
 	try:
 		stackId = [i for i,j in enumerate(stackData) if j['name'] == stackname][0]
