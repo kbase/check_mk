@@ -103,8 +103,10 @@ def process_section(conf, section):
 	#	    print svc['healthState']
 
 # if on a host running containers, check their resources
-# assume only one instance
-# broken?
+# assume only one instance per service
+		memState = 0
+		memStateText = 'OK'
+		memCommentText = ''
 		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
 		rancherInstance=instanceReq.json()
 		if rancherInstance['hostId'] == hostid:
@@ -112,9 +114,12 @@ def process_section(conf, section):
 			dockerClient = docker.from_env()
 			dockerContainer = dockerClient.containers.get(rancherInstance['externalId'])
 # need to put this into check_mk format (and make only one line of output for all containers)
-			print (svc['name'] + ' ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']))
+			if dockerContainer.stats(stream=False)['memory_stats']['usage'] > 1000000:
+				memState = 1
+				memStateText = 'WARNING'
+				memCommentText += (svc['name'] + ': ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']))
+		print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentText
 
-		rancherHostReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 
 
 # in each service find the last logs?  may be hard, need websocket
