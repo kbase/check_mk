@@ -116,8 +116,8 @@ def process_section(conf, section):
 # need to put this into check_mk format (and make only one line of output for all containers)
 			if dockerContainer.stats(stream=False)['memory_stats']['usage'] > 1000000:
 				memState = 1
-				memStateText = 'WARNING'
-				memCommentText += (svc['name'] + ': ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']))
+				memStateTxt = 'WARNING'
+				memCommentTxt += (svc['name'] + ': ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']))
 		print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
 
 
