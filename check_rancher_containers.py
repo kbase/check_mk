@@ -118,7 +118,7 @@ def process_section(conf, section):
 				memState = 1
 				memStateText = 'WARNING'
 				memCommentText += (svc['name'] + ': ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']))
-		print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentText
+		print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentText)
 
 
 
