@@ -117,7 +117,7 @@ def process_section(conf, section):
 			if dockerContainer.stats(stream=False)['memory_stats']['usage'] > 100000000:
 				memState = 1
 				memStateTxt = 'WARNING'
-				memCommentTxt += (svc['name'] + ': ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']))
+				memCommentTxt += (svc['name'] + ': ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']) + ' ')
 
 	print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
 
