@@ -110,11 +110,11 @@ def process_section(conf, section):
 		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
 		rancherInstance=instanceReq.json()
 		if rancherInstance['hostId'] == hostid:
-			print (rancherInstance['name'])
+#			print (rancherInstance['name'])
 			dockerClient = docker.from_env()
 			dockerContainer = dockerClient.containers.get(rancherInstance['externalId'])
 # need to put this into check_mk format (and make only one line of output for all containers)
-			if dockerContainer.stats(stream=False)['memory_stats']['usage'] > 10000000:
+			if dockerContainer.stats(stream=False)['memory_stats']['usage'] > 100000000:
 				memState = 1
 				memStateTxt = 'WARNING'
 				memCommentTxt += (svc['name'] + ': ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']))
