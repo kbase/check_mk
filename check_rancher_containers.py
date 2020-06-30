@@ -83,6 +83,9 @@ def process_section(conf, section):
 # assume no stack data; this is bad and need better handling
 		sys.exit(0)
 
+	memState = 0
+	memStateTxt = 'OK'
+	memCommentTxt = ''
 	for serviceId in stackData[stackId]['serviceIds']:
 	#	print (serviceId)
 # in that stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
@@ -104,9 +107,6 @@ def process_section(conf, section):
 
 # if on a host running containers, check their resources
 # assume only one instance per service
-		memState = 0
-		memStateTxt = 'OK'
-		memCommentTxt = ''
 		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
 		rancherInstance=instanceReq.json()
 		if rancherInstance['hostId'] == hostid:
@@ -114,11 +114,12 @@ def process_section(conf, section):
 			dockerClient = docker.from_env()
 			dockerContainer = dockerClient.containers.get(rancherInstance['externalId'])
 # need to put this into check_mk format (and make only one line of output for all containers)
-			if dockerContainer.stats(stream=False)['memory_stats']['usage'] > 1000000:
+			if dockerContainer.stats(stream=False)['memory_stats']['usage'] > 10000000:
 				memState = 1
 				memStateTxt = 'WARNING'
 				memCommentTxt += (svc['name'] + ': ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']))
-		print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
+
+	print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
 
 
 
