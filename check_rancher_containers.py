@@ -6,7 +6,7 @@ import requests
 import argparse
 import configparser
 import json
-import docker
+import subprocess
 
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
 parser.add_argument('--config-file', dest='configfile', required=True,
@@ -83,6 +83,18 @@ def process_section(conf, section):
 # assume no stack data; this is bad and need better handling
 		sys.exit(0)
 
+	memState = 0
+	memStateTxt = 'OK'
+	memCommentTxt = ''
+	dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
+#	print(dockerStatsProc)
+	dockerStats = dict()
+	for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
+		mylist = line.strip("'").split(':')
+		memUse = mylist[1].split(' ')
+		dockerStats[mylist[0]] = memUse[0]
+#	print(dockerStats)
+	
 	for serviceId in stackData[stackId]['serviceIds']:
 	#	print (serviceId)
 # in that stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
@@ -103,19 +115,22 @@ def process_section(conf, section):
 	#	    print svc['healthState']
 
 # if on a host running containers, check their resources
-# assume only one instance
-# broken?
-#		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
-#		rancherInstance=instanceReq.json()
-#		if rancherInstance['hostId'] == hostid:
-#			print (rancherInstance['name'])
-#			dockerClient = docker.from_env()
-#			dockerContainer = dockerClient.containers.get(rancherInstance['externalId'])
-# need to put this into check_mk format (and make only one line of output for all containers)
-#			print (svc['name'] + ' ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']))
+# assume only one instance per service
+		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
+		rancherInstance=instanceReq.json()
+		if rancherInstance['hostId'] == hostid:
+#			print (rancherInstance['name'] + ' ' + rancherInstance['externalId'])
+			memUse = dockerStats[rancherInstance['externalId']]
+#			print (memUse)
+# crude hack: docker stats outputs human readable.  assume we only care about GB or more use
+# future: better calculations
+			if 'G' in memUse:
+				memState = 1
+				memStateTxt = 'WARNING'
+				memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ')
 
-#		rancherHostReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
-#		if os.uname()[1] == 
+	print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
+
 
 
 # in each service find the last logs?  may be hard, need websocket
