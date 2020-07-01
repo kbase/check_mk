@@ -6,7 +6,7 @@ import requests
 import argparse
 import configparser
 import json
-import docker
+import subprocess
 
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
 parser.add_argument('--config-file', dest='configfile', required=True,
@@ -86,6 +86,14 @@ def process_section(conf, section):
 	memState = 0
 	memStateTxt = 'OK'
 	memCommentTxt = ''
+	dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.Name}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
+#	print(dockerStatsProc)
+	dockerStats = dict()
+	for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
+		mylist = line.split(':')
+		dockerStats[mylist[0]] = mylist[1]
+	print(dockerStats)
+	
 	for serviceId in stackData[stackId]['serviceIds']:
 	#	print (serviceId)
 # in that stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
@@ -111,10 +119,8 @@ def process_section(conf, section):
 		rancherInstance=instanceReq.json()
 		if rancherInstance['hostId'] == hostid:
 #			print (rancherInstance['name'])
-			dockerClient = docker.from_env()
-			dockerContainer = dockerClient.containers.get(rancherInstance['externalId'])
 # need to put this into check_mk format (and make only one line of output for all containers)
-			if dockerContainer.stats(stream=False)['memory_stats']['usage'] > 100000000:
+			if memUse > 100000000:
 				memState = 1
 				memStateTxt = 'WARNING'
 				memCommentTxt += (svc['name'] + ': ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']) + ' ')
