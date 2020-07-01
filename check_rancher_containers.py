@@ -93,7 +93,7 @@ def process_section(conf, section):
 		mylist = line.strip("'").split(':')
 		memUse = mylist[1].split(' ')
 		dockerStats[mylist[0]] = memUse[0]
-	print(dockerStats)
+#	print(dockerStats)
 	
 	for serviceId in stackData[stackId]['serviceIds']:
 	#	print (serviceId)
