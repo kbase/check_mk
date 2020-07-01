@@ -90,7 +90,7 @@ def process_section(conf, section):
 #	print(dockerStatsProc)
 	dockerStats = dict()
 	for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
-		mylist = line.split(':')
+		mylist = line.strip("'").split(':')
 		dockerStats[mylist[0]] = mylist[1]
 	print(dockerStats)
 	
