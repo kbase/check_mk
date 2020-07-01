@@ -127,7 +127,7 @@ def process_section(conf, section):
 			if 'G' in memUse:
 				memState = 1
 				memStateTxt = 'WARNING'
-				memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ')
+				memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ;; ')
 
 	print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
 
