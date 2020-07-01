@@ -118,12 +118,14 @@ def process_section(conf, section):
 		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
 		rancherInstance=instanceReq.json()
 		if rancherInstance['hostId'] == hostid:
-#			print (rancherInstance['name'])
+			print (rancherInstance['name'])
 # need to put this into check_mk format (and make only one line of output for all containers)
+			memUse = dockerStats[rancherInstance['name']]
+			print (memUse)
 			if memUse > 100000000:
 				memState = 1
 				memStateTxt = 'WARNING'
-				memCommentTxt += (svc['name'] + ': ' + str(dockerContainer.stats(stream=False)['memory_stats']['usage']) + ' ')
+				memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ')
 
 	print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
 
