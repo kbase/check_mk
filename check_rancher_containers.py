@@ -86,7 +86,7 @@ def process_section(conf, section):
 	memState = 0
 	memStateTxt = 'OK'
 	memCommentTxt = ''
-	dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.Name}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
+	dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.Container}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
 #	print(dockerStatsProc)
 	dockerStats = dict()
 	for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
@@ -118,9 +118,8 @@ def process_section(conf, section):
 		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
 		rancherInstance=instanceReq.json()
 		if rancherInstance['hostId'] == hostid:
-			print (rancherInstance['name'])
-# cheat since the docker name is in dockerStats
-			memUse = dockerStats['r-'+rancherInstance['name']]
+			print (rancherInstance['name'] + ' ' + rancherInstance['externalId'])
+			memUse = dockerStats[rancherInstance['externalId']]
 			print (memUse)
 			if memUse > 100000000:
 				memState = 1
