@@ -119,8 +119,8 @@ def process_section(conf, section):
 		rancherInstance=instanceReq.json()
 		if rancherInstance['hostId'] == hostid:
 			print (rancherInstance['name'])
-# need to put this into check_mk format (and make only one line of output for all containers)
-			memUse = dockerStats[rancherInstance['name']]
+# cheat since the docker name is in dockerStats
+			memUse = dockerStats['r-'+rancherInstance['name']]
 			print (memUse)
 			if memUse > 100000000:
 				memState = 1
