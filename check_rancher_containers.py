@@ -119,9 +119,9 @@ def process_section(conf, section):
 		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
 		rancherInstance=instanceReq.json()
 		if rancherInstance['hostId'] == hostid:
-			print (rancherInstance['name'] + ' ' + rancherInstance['externalId'])
+#			print (rancherInstance['name'] + ' ' + rancherInstance['externalId'])
 			memUse = dockerStats[rancherInstance['externalId']]
-			print (memUse)
+#			print (memUse)
 # crude hack: docker stats outputs human readable.  assume we only care about GB or more use
 # future: better calculations
 			if 'G' in memUse:
