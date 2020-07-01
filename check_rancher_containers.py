@@ -122,7 +122,9 @@ def process_section(conf, section):
 			print (rancherInstance['name'] + ' ' + rancherInstance['externalId'])
 			memUse = dockerStats[rancherInstance['externalId']]
 			print (memUse)
-			if memUse > 100000000:
+# crude hack: docker stats outputs human readable.  assume we only care about GB or more use
+# future: better calculations
+			if 'G' in memUse:
 				memState = 1
 				memStateTxt = 'WARNING'
 				memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ')
