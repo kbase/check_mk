@@ -68,7 +68,7 @@ def process_section(conf, section):
 	#	print len(instanceData)
 	#	for instance in instanceData:
 	#		print instance
-		print (str(state) + ' rancher_agent_' + host['hostname'] + ' numContainers=' + str(len(instanceData)) + ';;;20;200 '  + stateText + ' host ' + host['hostname'] + ' running containers: ' + str(len(instanceData)))
+		print (str(state) + ' rancher_agent_' + host['hostname'] + ' numContainers=' + str(len(instanceData)) + ';;;20;500 '  + stateText + ' host ' + host['hostname'] + ' running containers: ' + str(len(instanceData)))
 
 # to do: monitor services inside a stack
 	stackReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/stacks/', auth=(username,password))
