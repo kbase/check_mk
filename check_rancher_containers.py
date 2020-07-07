@@ -63,7 +63,7 @@ def process_section(conf, section):
 			state=0
 			stateText='OK'
 
-		instanceReq=session.get(host['links']['instances'] + '?limit=200' ,auth=(username,password))
+		instanceReq=session.get(host['links']['instances'] + '?limit=500' ,auth=(username,password))
 		instanceData=instanceReq.json()['data']
 	#	print len(instanceData)
 	#	for instance in instanceData:
