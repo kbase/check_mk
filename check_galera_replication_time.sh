@@ -42,8 +42,8 @@ print_help() {
 }
 
 # default values
-crit=1440.0
-warn=2880.0
+crit=720.0
+warn=1440.0
 port='3306'
 mysqlhost='localhost'
 
