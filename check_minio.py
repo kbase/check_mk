@@ -8,7 +8,8 @@ status_strings = ['OK','WARNING','CRITICAL','UNKNOWN']
 
 #/opt/mc/mc admin info --json  minio
 #out=subprocess.run(['/opt/mc/mc','admin','info','--json','minio'])
-out=subprocess.check_output(['/opt/mc/mc','admin','info','--json','minio'])
+# need --insecure with recent mc clients and self-signed certs
+out=subprocess.check_output(['/opt/mc/mc','admin','info','--insecure','--json','minio'])
 
 status = 3
 
