@@ -47,10 +47,13 @@ for server in (minioInfo['info']['servers']):
 # try to strip leading "https:" from this to be consistent with above
             driveEndpoint = drive['endpoint'].replace('https://','')
 # drive state; alert if not "ok"
-        if (drive['state'] != 'ok'):
+        if (drive['state'] != 'ok' or 'healing' in drive):
             # assume a missing drive is not critical
             status = 1
+            driveExtraInfo = ''
+            if ('healing' in drive):
+                driveExtraInfo = '(healing)'
             # since there are so many drives, only add unhealthy ones to output
-            driveStateString += ' ' + driveEndpoint + ' : ' + drive['state']
+            driveStateString += ' ' + driveEndpoint + ' : ' + drive['state'] + ' driveExtraInfo
 
 print ("%d Minio_status - %s - %s %s %s" % (status, status_strings[status], clusterModeString, serverStateString, driveStateString) )
