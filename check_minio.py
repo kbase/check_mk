@@ -54,6 +54,6 @@ for server in (minioInfo['info']['servers']):
             if ('healing' in drive):
                 driveExtraInfo = '(healing)'
             # since there are so many drives, only add unhealthy ones to output
-            driveStateString += ' ' + driveEndpoint + ' : ' + drive['state'] + ' driveExtraInfo
+            driveStateString += ' ' + driveEndpoint + ' : ' + drive['state'] + ' ' + driveExtraInfo
 
 print ("%d Minio_status - %s - %s %s %s" % (status, status_strings[status], clusterModeString, serverStateString, driveStateString) )
