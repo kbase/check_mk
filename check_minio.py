@@ -11,7 +11,8 @@ status_strings = ['OK','WARNING','CRITICAL','UNKNOWN']
 # need --insecure with recent mc clients and self-signed certs
 out=subprocess.check_output(['/opt/mc/mc','admin','info','--insecure','--json','minio'])
 
-status = 3
+# default to OK
+status = 0
 
 #print(out)
 
