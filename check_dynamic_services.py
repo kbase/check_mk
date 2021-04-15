@@ -43,6 +43,7 @@ for dynsvc in services:
     
     dynsvcreq = requests.post(dynsvcurl,json=dynsvcdata)
     dynsvcstate=dynsvcreq.json()['result'][0]['state']
+    print(dynsvcreq.json())
     
     svcstate=0
     svcstatetext=dynsvcstate
