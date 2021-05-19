@@ -42,7 +42,12 @@ for dynsvc in services:
     }
     
     dynsvcreq = requests.post(dynsvcurl,json=dynsvcdata)
-    dynsvcstate=dynsvcreq.json()['result'][0]['state']
+    try:
+        dynsvcstate = dynsvcreq.json()['result'][0]['state']
+    except:
+        print '2 dynserv_' + dynsvc + ' - CRITICAL - service ' + dynsvc + ' not responding correctly'
+        continue
+    dynsvcver = dynsvcreq.json()['result'][0]['version']
     
     svcstate=0
     svcstatetext=dynsvcstate
@@ -53,4 +58,4 @@ for dynsvc in services:
         svcstate=2
         svcstatetext='CRITICAL'
 
-    print str(svcstate) + ' dynserv_' + dynsvc + ' - ' + svcstatetext + ' - service ' + dynsvc + ' reports state ' + dynsvcstate
+    print str(svcstate) + ' dynserv_' + dynsvc + ' - ' + svcstatetext + ' - service ' + dynsvc + ' version ' + dynsvcver + ' reports state ' + dynsvcstate
