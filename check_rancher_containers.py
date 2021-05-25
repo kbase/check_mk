@@ -86,13 +86,13 @@ def process_section(conf, section):
 	memState = 0
 	memStateTxt = 'OK'
 	memCommentTxt = ''
-	dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
+#	dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
 #	print(dockerStatsProc)
-	dockerStats = dict()
-	for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
-		mylist = line.strip("'").split(':')
-		memUse = mylist[1].split(' ')
-		dockerStats[mylist[0]] = memUse[0]
+#	dockerStats = dict()
+#	for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
+#		mylist = line.strip("'").split(':')
+#		memUse = mylist[1].split(' ')
+#		dockerStats[mylist[0]] = memUse[0]
 #	print(dockerStats)
 	
 	for serviceId in stackData[stackId]['serviceIds']:
@@ -116,20 +116,20 @@ def process_section(conf, section):
 
 # if on a host running containers, check their resources
 # assume only one instance per service
-		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
-		rancherInstance=instanceReq.json()
-		if rancherInstance['hostId'] == hostid:
-#			print (rancherInstance['name'] + ' ' + rancherInstance['externalId'])
-			memUse = dockerStats[rancherInstance['externalId']]
-#			print (memUse)
-# crude hack: docker stats outputs human readable.  assume we only care about GB or more use
-# future: better calculations
-			if 'G' in memUse:
-				memState = 1
-				memStateTxt = 'WARNING'
-				memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ;; ')
+#		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
+#		rancherInstance=instanceReq.json()
+#		if rancherInstance['hostId'] == hostid:
+##			print (rancherInstance['name'] + ' ' + rancherInstance['externalId'])
+#			memUse = dockerStats[rancherInstance['externalId']]
+##			print (memUse)
+## crude hack: docker stats outputs human readable.  assume we only care about GB or more use
+## future: better calculations
+#			if 'G' in memUse:
+#				memState = 1
+#				memStateTxt = 'WARNING'
+#				memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ;; ')
 
-	print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
+#	print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
 
 
 
