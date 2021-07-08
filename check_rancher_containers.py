@@ -92,14 +92,16 @@ def process_section(conf, section):
 	memCommentTxt = ''
 ## can only check stats on the local host
 ## to do: try to talk to the websocket to get stats from rancher API instead
-	dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
-#	print(dockerStatsProc)
 	dockerStats = dict()
-	for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
-		mylist = line.strip("'").split(':')
-		memUse = mylist[1].split(' ')
-		dockerStats[mylist[0]] = memUse[0]
-#	print(dockerStats)
+
+	if hostid is not None:
+		dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
+#		print(dockerStatsProc)
+		for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
+			mylist = line.strip("'").split(':')
+			memUse = mylist[1].split(' ')
+			dockerStats[mylist[0]] = memUse[0]
+#		print(dockerStats)
 	
 	for serviceId in stackData[myStack]['serviceIds']:
 	#	print (serviceId)
