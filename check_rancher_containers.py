@@ -94,6 +94,7 @@ def process_section(conf, section):
 ## to do: try to talk to the websocket to get stats from rancher API instead
 	dockerStats = dict()
 
+# only get stats if hostid specified (since some hosts' subprocess module is broken)
 	if hostid is not None:
 		dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
 #		print(dockerStatsProc)
