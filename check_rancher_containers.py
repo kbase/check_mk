@@ -143,7 +143,7 @@ def process_section(conf, section):
 				memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ;; ')
 
 	if hostid is not None:
-		print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
+		print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory_' + hostid + ' - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
 
 ### spin up a dummy new service
 # initially copied from narrative-traefiker
