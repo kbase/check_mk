@@ -134,6 +134,7 @@ def process_section(conf, section):
 #	print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
 
 ### spin up a dummy new service
+# initially copied from narrative-traefiker
 	container_config = {u'assignServiceIpAddress': False,
                         u'createIndex': None,
                         u'created': None,
@@ -204,7 +205,7 @@ def process_section(conf, section):
                             u'oomScoreAdj': None,
                             u'pidMode': None,
                             u'pidsLimit': None,
-                            u'ports': [u'8888/tcp'],
+                            u'ports': [],
                             u'privileged': False,
                             u'publishAllPorts': False,
                             u'readOnly': False,
@@ -229,18 +230,21 @@ def process_section(conf, section):
                             u'vcpu': 1,
                             u'volumeDriver': None,
                             u'workingDir': None},
-                        u'name': None,
+                        u'name': 'helloWorld',
                         u'removed': None,
                         u'scale': 1,
                         u'secondaryLaunchConfigs': [],
                         u'selectorContainer': None,
                         u'selectorLink': None,
-                        u'stackId': None,
+                        u'stackId': stackId,
                         u'startOnCreate': True,
                         u'system': False,
                         u'type': u'service',
                         u'uuid': None,
                         u'vip': None}
+
+	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service, json=container_config, auth=(username,password))
+
 
 # in each service find the last logs?  may be hard, need websocket
 
