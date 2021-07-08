@@ -134,7 +134,7 @@ def process_section(conf, section):
 #	print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
 
 ### spin up a dummy new service
-    container_config = {u'assignServiceIpAddress': False,
+	container_config = {u'assignServiceIpAddress': False,
                         u'createIndex': None,
                         u'created': None,
                         u'description': None,
