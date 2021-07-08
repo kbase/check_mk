@@ -138,7 +138,7 @@ def process_section(conf, section):
 
 ### spin up a dummy new service
 # initially copied from narrative-traefiker
-	container_config = {u'assignServiceIpAddress': False,
+	containerConfig = {u'assignServiceIpAddress': False,
                         u'createIndex': None,
                         u'created': None,
                         u'description': None,
@@ -248,7 +248,7 @@ def process_section(conf, section):
 	dummyServiceState = 3
 	dummyServiceStateTxt = 'UNKNOWN'
 
-	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=container_config, auth=(username,password))
+	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=containerConfig, auth=(username,password))
 	if newSvcReq.ok:
 		newDummyService = newSvcReq.json()
 # need to sleep, in case an error pops up while creating the service container
@@ -265,6 +265,9 @@ def process_section(conf, section):
 			dummyServiceState = 2
 			dummyServiceStateTxt = 'CRITICAL: created service but service unhealthy'
 		deleteSvcReq = session.delete(newDummyService['links']['self'] , auth=(username,password))
+		if not dummySvcReq.ok:
+			dummyServiceState = 2
+			dummyServiceStateTxt += ' unable to delete created service'
 
 	else:
 		dummyServiceState = 2
