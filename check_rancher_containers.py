@@ -83,6 +83,7 @@ def process_section(conf, section):
 # assume no stack data; this is bad and need better handling
 		sys.exit(0)
 
+### this part needs a lot of work
 	memState = 0
 	memStateTxt = 'OK'
 	memCommentTxt = ''
@@ -116,6 +117,7 @@ def process_section(conf, section):
 
 # if on a host running containers, check their resources
 # assume only one instance per service
+### this part needs lots of work
 #		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
 #		rancherInstance=instanceReq.json()
 #		if rancherInstance['hostId'] == hostid:
