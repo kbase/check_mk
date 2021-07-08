@@ -7,6 +7,7 @@ import argparse
 import configparser
 import json
 import subprocess
+from pprint import pprint
 
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
 parser.add_argument('--config-file', dest='configfile', required=True,
@@ -244,7 +245,7 @@ def process_section(conf, section):
                         u'vip': None}
 
 	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=container_config, auth=(username,password))
-
+	pprint(newSvcReq)
 
 # in each service find the last logs?  may be hard, need websocket
 
