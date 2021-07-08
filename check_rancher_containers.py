@@ -243,7 +243,7 @@ def process_section(conf, section):
                         u'uuid': None,
                         u'vip': None}
 
-	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service, json=container_config, auth=(username,password))
+	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=container_config, auth=(username,password))
 
 
 # in each service find the last logs?  may be hard, need websocket
