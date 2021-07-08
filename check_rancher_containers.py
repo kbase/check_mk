@@ -7,6 +7,7 @@ import argparse
 import configparser
 import json
 import subprocess
+import time
 from pprint import pprint
 
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
@@ -77,12 +78,13 @@ def process_section(conf, section):
 
 # assume there's only one
 #	print (stackData)
-	stackId='none'
+	myStack='none'
 	try:
-		stackId = [i for i,j in enumerate(stackData) if j['name'] == stackname][0]
+		myStack = [i for i,j in enumerate(stackData) if j['name'] == stackname][0]
 	except:
 # assume no stack data; this is bad and need better handling
 		sys.exit(0)
+	stackId = stackData[myStack]['id']
 
 ### this part needs a lot of work
 	memState = 0
@@ -97,7 +99,7 @@ def process_section(conf, section):
 #		dockerStats[mylist[0]] = memUse[0]
 #	print(dockerStats)
 	
-	for serviceId in stackData[stackId]['serviceIds']:
+	for serviceId in stackData[myStack]['serviceIds']:
 	#	print (serviceId)
 # in that stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
 		serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
@@ -181,7 +183,7 @@ def process_section(conf, section):
                             u'healthState': None,
                             u'healthTimeout': None,
                             u'hostname': None,
-                            u'imageUuid': u'docker:hello-world',
+                            u'imageUuid': u'docker:containous/whoami',
                             u'instanceTriggeredStop': u'stop',
                             u'ioMaximumBandwidth': None,
                             u'ioMaximumIOps': None,
@@ -191,9 +193,7 @@ def process_section(conf, section):
                             u'isolation': None,
                             u'kernelMemory': None,
                             u'kind': u'container',
-                            u'labels': {
-                                u'io.rancher.container.pull_image': u'always',
-                                },
+                            u'labels': {},
                             u'logConfig': {u'config': {}, u'driver': u''},
                             u'memory': None,
                             u'memoryMb': None,
@@ -231,7 +231,7 @@ def process_section(conf, section):
                             u'vcpu': 1,
                             u'volumeDriver': None,
                             u'workingDir': None},
-                        u'name': 'helloWorld',
+                        u'name': 'checkmkDummy',
                         u'removed': None,
                         u'scale': 1,
                         u'secondaryLaunchConfigs': [],
@@ -244,8 +244,33 @@ def process_section(conf, section):
                         u'uuid': None,
                         u'vip': None}
 
-	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=container_config, auth=(username,password))
-	pprint(newSvcReq)
+#       pprint(stackId)
+        dummyServiceState = 3
+        dummyServiceStateTxt = 'UNKNOWN'
+
+        newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=container_config, auth=(username,password))
+        if newSvcReq.ok:
+                newDummyService = newSvcReq.json()
+# need to sleep, in case an error pops up while creating the service container
+# (for example, can't pull the image)
+# hope 10sec should be enough time; don't want too long or check runs too long on a lot of instances
+                time.sleep(10)
+                newSvcState = session.get(newDummyService['links']['self'], auth=(username,password))
+                dummySvc = newSvcState.json()
+
+                if dummySvc['healthState'] == 'healthy':
+                        dummyServiceState = 0
+                        dummyServiceStateTxt = 'OK'
+                if dummySvc['healthState'] == 'unhealthy':
+                        dummyServiceState = 2
+                        dummyServiceStateTxt = 'CRITICAL: created service but service unhealthy'
+                deleteSvcReq = session.delete(newDummyService['links']['self'] , auth=(username,password))
+
+        else:
+                dummyServiceState = 2
+                dummyServiceStateTxt = 'CRITICAL did not get 200 creating service'
+        print (str(dummyServiceState) + ' ' + envname + '_' + stackname + '_createNewService - ' + dummyServiceStateTxt)
+
 
 # in each service find the last logs?  may be hard, need websocket
 
