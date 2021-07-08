@@ -128,6 +128,9 @@ def process_section(conf, section):
 ### this part needs lots of work
 		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
 		rancherInstance=instanceReq.json()
+# to do: give a hostname, and match it up to the rancher API hostId
+# otherwise, if the hostId changes, such as if a host is removed and added back to Rancher,
+# the container memory check will always be OK
 		if rancherInstance['hostId'] == hostid:
 #			print (rancherInstance['name'] + ' ' + rancherInstance['externalId'])
 			memUse = dockerStats[rancherInstance['externalId']]
