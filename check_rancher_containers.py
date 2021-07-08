@@ -90,6 +90,8 @@ def process_section(conf, section):
 	memState = 0
 	memStateTxt = 'OK'
 	memCommentTxt = ''
+## can only check stats on the local host
+## to do: try to talk to the websocket to get stats from rancher API instead
 	dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
 #	print(dockerStatsProc)
 	dockerStats = dict()
@@ -134,7 +136,8 @@ def process_section(conf, section):
 				memStateTxt = 'WARNING'
 				memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ;; ')
 
-	print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
+	if hostid is not None:
+		print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
 
 ### spin up a dummy new service
 # initially copied from narrative-traefiker
