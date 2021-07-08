@@ -90,13 +90,13 @@ def process_section(conf, section):
 	memState = 0
 	memStateTxt = 'OK'
 	memCommentTxt = ''
-#	dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
+	dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
 #	print(dockerStatsProc)
-#	dockerStats = dict()
-#	for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
-#		mylist = line.strip("'").split(':')
-#		memUse = mylist[1].split(' ')
-#		dockerStats[mylist[0]] = memUse[0]
+	dockerStats = dict()
+	for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
+		mylist = line.strip("'").split(':')
+		memUse = mylist[1].split(' ')
+		dockerStats[mylist[0]] = memUse[0]
 #	print(dockerStats)
 	
 	for serviceId in stackData[myStack]['serviceIds']:
