@@ -245,31 +245,31 @@ def process_section(conf, section):
                         u'vip': None}
 
 #       pprint(stackId)
-        dummyServiceState = 3
-        dummyServiceStateTxt = 'UNKNOWN'
+	dummyServiceState = 3
+	dummyServiceStateTxt = 'UNKNOWN'
 
-        newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=container_config, auth=(username,password))
-        if newSvcReq.ok:
-                newDummyService = newSvcReq.json()
+	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=container_config, auth=(username,password))
+	if newSvcReq.ok:
+		newDummyService = newSvcReq.json()
 # need to sleep, in case an error pops up while creating the service container
 # (for example, can't pull the image)
 # hope 10sec should be enough time; don't want too long or check runs too long on a lot of instances
-                time.sleep(10)
-                newSvcState = session.get(newDummyService['links']['self'], auth=(username,password))
-                dummySvc = newSvcState.json()
+		time.sleep(10)
+		newSvcState = session.get(newDummyService['links']['self'], auth=(username,password))
+		dummySvc = newSvcState.json()
 
-                if dummySvc['healthState'] == 'healthy':
-                        dummyServiceState = 0
-                        dummyServiceStateTxt = 'OK'
-                if dummySvc['healthState'] == 'unhealthy':
-                        dummyServiceState = 2
-                        dummyServiceStateTxt = 'CRITICAL: created service but service unhealthy'
-                deleteSvcReq = session.delete(newDummyService['links']['self'] , auth=(username,password))
+		if dummySvc['healthState'] == 'healthy':
+			dummyServiceState = 0
+			dummyServiceStateTxt = 'OK'
+		if dummySvc['healthState'] == 'unhealthy':
+			dummyServiceState = 2
+ 			dummyServiceStateTxt = 'CRITICAL: created service but service unhealthy'
+		deleteSvcReq = session.delete(newDummyService['links']['self'] , auth=(username,password))
 
-        else:
-                dummyServiceState = 2
-                dummyServiceStateTxt = 'CRITICAL did not get 200 creating service'
-        print (str(dummyServiceState) + ' ' + envname + '_' + stackname + '_createNewService - ' + dummyServiceStateTxt)
+	else:
+		dummyServiceState = 2
+		dummyServiceStateTxt = 'CRITICAL did not get 200 creating service'
+	print (str(dummyServiceState) + ' ' + envname + '_' + stackname + '_createNewService - ' + dummyServiceStateTxt)
 
 
 # in each service find the last logs?  may be hard, need websocket
