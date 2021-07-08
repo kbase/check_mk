@@ -183,7 +183,7 @@ def process_section(conf, section):
                             u'healthState': None,
                             u'healthTimeout': None,
                             u'hostname': None,
-                            u'imageUuid': u'docker:containous/whoami',
+                            u'imageUuid': u'docker:dockerhub-prod.kbase.us/containous/whoami',
                             u'instanceTriggeredStop': u'stop',
                             u'ioMaximumBandwidth': None,
                             u'ioMaximumIOps': None,
