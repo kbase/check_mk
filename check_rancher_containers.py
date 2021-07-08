@@ -265,7 +265,7 @@ def process_section(conf, section):
 			dummyServiceState = 2
 			dummyServiceStateTxt = 'CRITICAL: created service but service unhealthy'
 		deleteSvcReq = session.delete(newDummyService['links']['self'] , auth=(username,password))
-		if not dummySvcReq.ok:
+		if not deleteSvcReq.ok:
 			dummyServiceState = 2
 			dummyServiceStateTxt += ' unable to delete created service'
 
