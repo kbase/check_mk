@@ -126,7 +126,7 @@ def process_section(conf, section):
 # if on a host running containers, check their resources
 # assume only one instance per service
 ### this part needs lots of work
-		if hostid is not null:
+		if hostid is not None:
 			instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
 			rancherInstance=instanceReq.json()
 # to do: give a hostname, and match it up to the rancher API hostId
