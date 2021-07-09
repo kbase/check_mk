@@ -7,6 +7,8 @@ import argparse
 import configparser
 import json
 import subprocess
+import time
+from pprint import pprint
 
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
 parser.add_argument('--config-file', dest='configfile', required=True,
@@ -76,27 +78,33 @@ def process_section(conf, section):
 
 # assume there's only one
 #	print (stackData)
-	stackId='none'
+	myStack='none'
 	try:
-		stackId = [i for i,j in enumerate(stackData) if j['name'] == stackname][0]
+		myStack = [i for i,j in enumerate(stackData) if j['name'] == stackname][0]
 	except:
 # assume no stack data; this is bad and need better handling
 		sys.exit(0)
+	stackId = stackData[myStack]['id']
 
 ### this part needs a lot of work
 	memState = 0
 	memStateTxt = 'OK'
 	memCommentTxt = ''
-#	dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
-#	print(dockerStatsProc)
-#	dockerStats = dict()
-#	for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
-#		mylist = line.strip("'").split(':')
-#		memUse = mylist[1].split(' ')
-#		dockerStats[mylist[0]] = memUse[0]
-#	print(dockerStats)
+## can only check stats on the local host
+## to do: try to talk to the websocket to get stats from rancher API instead
+	dockerStats = dict()
+
+# only get stats if hostid specified (since some hosts' subprocess module is broken)
+	if hostid is not None:
+		dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
+#		print(dockerStatsProc)
+		for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
+			mylist = line.strip("'").split(':')
+			memUse = mylist[1].split(' ')
+			dockerStats[mylist[0]] = memUse[0]
+#		print(dockerStats)
 	
-	for serviceId in stackData[stackId]['serviceIds']:
+	for serviceId in stackData[myStack]['serviceIds']:
 	#	print (serviceId)
 # in that stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
 		serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
@@ -118,21 +126,162 @@ def process_section(conf, section):
 # if on a host running containers, check their resources
 # assume only one instance per service
 ### this part needs lots of work
-#		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
-#		rancherInstance=instanceReq.json()
-#		if rancherInstance['hostId'] == hostid:
-##			print (rancherInstance['name'] + ' ' + rancherInstance['externalId'])
-#			memUse = dockerStats[rancherInstance['externalId']]
-##			print (memUse)
+		instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
+		rancherInstance=instanceReq.json()
+# to do: give a hostname, and match it up to the rancher API hostId
+# otherwise, if the hostId changes, such as if a host is removed and added back to Rancher,
+# the container memory check will always be OK
+		if rancherInstance['hostId'] == hostid:
+#			print (rancherInstance['name'] + ' ' + rancherInstance['externalId'])
+			memUse = dockerStats[rancherInstance['externalId']]
+#			print (memUse)
 ## crude hack: docker stats outputs human readable.  assume we only care about GB or more use
 ## future: better calculations
-#			if 'G' in memUse:
-#				memState = 1
-#				memStateTxt = 'WARNING'
-#				memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ;; ')
+			if 'G' in memUse:
+				memState = 1
+				memStateTxt = 'WARNING'
+				memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ;; ')
 
-#	print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory - ' + memStateTxt + ' big mem containers: ' + memCommentTxt)
+	if hostid is not None:
+		print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory-' + hostid + ' - ' + memStateTxt + ' big mem containers on host ' + hostid + ' : ' + memCommentTxt)
 
+### spin up a dummy new service
+# initially copied from narrative-traefiker
+	containerConfig = {u'assignServiceIpAddress': False,
+                        u'createIndex': None,
+                        u'created': None,
+                        u'description': None,
+                        u'externalId': None,
+                        u'fqdn': None,
+                        u'healthState': None,
+                        u'kind': None,
+                        u'launchConfig':   {
+                            u'blkioWeight': None,
+                            u'capAdd': [],
+                            u'capDrop': ["MKNOD", "NET_RAW", "SYS_CHROOT", "SETUID", "SETGID", "CHOWN",
+                                         "DAC_OVERRIDE", "FOWNER", "FSETID", "SETPCAP", "AUDIT_WRITE", "SETFCAP"],
+                            u'cgroupParent': None,
+                            u'count': None,
+                            u'cpuCount': None,
+                            u'cpuPercent': None,
+                            u'cpuPeriod': None,
+                            u'cpuQuota': None,
+                            u'cpuRealtimePeriod': None,
+                            u'cpuRealtimeRuntime': None,
+                            u'cpuSet': None,
+                            u'cpuSetMems': None,
+                            u'cpuShares': None,
+                            u'createIndex': None,
+                            u'created': None,
+                            u'dataVolumes': [],
+                            u'dataVolumesFrom': [],
+                            u'dataVolumesFromLaunchConfigs': [],
+                            u'deploymentUnitUuid': None,
+                            u'description': None,
+                            u'devices': [],
+                            u'diskQuota': None,
+                            u'dns': [],
+                            u'dnsSearch': [],
+                            u'domainName': None,
+                            u'drainTimeoutMs': 0,
+                            u'environment': {},
+                            u'externalId': None,
+                            u'firstRunning': None,
+                            u'healthInterval': None,
+                            u'healthRetries': None,
+                            u'healthState': None,
+                            u'healthTimeout': None,
+                            u'hostname': None,
+                            u'imageUuid': u'docker:dockerhub-prod.kbase.us/containous/whoami',
+                            u'instanceTriggeredStop': u'stop',
+                            u'ioMaximumBandwidth': None,
+                            u'ioMaximumIOps': None,
+                            u'ip': None,
+                            u'ip6': None,
+                            u'ipcMode': None,
+                            u'isolation': None,
+                            u'kernelMemory': None,
+                            u'kind': u'container',
+                            u'labels': {},
+                            u'logConfig': {u'config': {}, u'driver': u''},
+                            u'memory': None,
+                            u'memoryMb': None,
+                            u'memoryReservation': None,
+                            u'memorySwap': None,
+                            u'memorySwappiness': None,
+                            u'milliCpuReservation': None,
+                            u'networkLaunchConfig': None,
+                            u'networkMode': u'managed',
+                            u'oomScoreAdj': None,
+                            u'pidMode': None,
+                            u'pidsLimit': None,
+                            u'ports': [],
+                            u'privileged': False,
+                            u'publishAllPorts': False,
+                            u'readOnly': False,
+                            u'removed': None,
+                            u'requestedIpAddress': None,
+                            u'restartPolicy': {u'name': u'never'},
+                            u'runInit': False,
+                            u'secrets': [],
+                            u'shmSize': None,
+                            u'startCount': None,
+                            u'startOnCreate': True,
+                            u'stdinOpen': True,
+                            u'stopSignal': None,
+                            u'stopTimeout': None,
+                            u'tty': True,
+                            u'type': u'launchConfig',
+                            u'user': None,
+                            u'userdata': None,
+                            u'usernsMode': None,
+                            u'uts': None,
+                            u'uuid': None,
+                            u'vcpu': 1,
+                            u'volumeDriver': None,
+                            u'workingDir': None},
+                        u'name': 'checkmkDummy',
+                        u'removed': None,
+                        u'scale': 1,
+                        u'secondaryLaunchConfigs': [],
+                        u'selectorContainer': None,
+                        u'selectorLink': None,
+                        u'stackId': stackId,
+                        u'startOnCreate': True,
+                        u'system': False,
+                        u'type': u'service',
+                        u'uuid': None,
+                        u'vip': None}
+
+#       pprint(stackId)
+	dummyServiceState = 3
+	dummyServiceStateTxt = 'UNKNOWN'
+
+	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=containerConfig, auth=(username,password))
+	if newSvcReq.ok:
+		newDummyService = newSvcReq.json()
+# need to sleep, in case an error pops up while creating the service container
+# (for example, can't pull the image)
+# hope 10sec should be enough time; don't want too long or check runs too long on a lot of instances
+		time.sleep(10)
+		newSvcState = session.get(newDummyService['links']['self'], auth=(username,password))
+		dummySvc = newSvcState.json()
+
+		if dummySvc['healthState'] == 'healthy':
+			dummyServiceState = 0
+			dummyServiceStateTxt = 'OK'
+		if dummySvc['healthState'] == 'unhealthy':
+			dummyServiceState = 2
+			dummyServiceStateTxt = 'CRITICAL: created service but service unhealthy'
+		deleteSvcReq = session.delete(newDummyService['links']['self'] , auth=(username,password))
+		if not deleteSvcReq.ok:
+			dummyServiceState = 2
+			dummyServiceStateTxt += ' unable to delete created service'
+
+	else:
+		dummyServiceState = 2
+		dummyServiceStateTxt = 'CRITICAL did not get 200 creating service'
+	print (str(dummyServiceState) + ' ' + envname + '_' + stackname + '_createNewService - ' + dummyServiceStateTxt)
 
 
 # in each service find the last logs?  may be hard, need websocket
