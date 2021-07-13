@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-```
+'''
 This script checks the status of Rancher 1.x agents, optionally stacks and services
 in given environments, and creating a dummy service in a given stack.
-```
+'''
 
 import os
 import sys
