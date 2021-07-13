@@ -57,24 +57,6 @@ def process_section(conf, section):
 	hostsReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/hosts/', auth=(username,password))
 	hostData=hostsReq.json()['data']
 
-# monitor an agent
-	for host in hostData:
-		state=3
-		stateText='UNKNOWN'
-
-		if (host['state'] != 'active'):
-			state=2
-			stateText='CRITICAL'
-		if (host['state'] == 'active'):
-			state=0
-			stateText='OK'
-
-		instanceReq=session.get(host['links']['instances'] + '?limit=500' ,auth=(username,password))
-		instanceData=instanceReq.json()['data']
-	#	print len(instanceData)
-	#	for instance in instanceData:
-	#		print instance
-	#	print (str(state) + ' rancher_agent_' + host['hostname'] + ' numContainers=' + str(len(instanceData)) + ';;;20;500 '  + stateText + ' host ' + host['hostname'] + ' running containers: ' + str(len(instanceData)))
 
 # to do: monitor services inside a stack
 	stackReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/stacks/', auth=(username,password))
@@ -108,16 +90,11 @@ def process_section(conf, section):
 			dockerStats[mylist[0]] = memUse[0]
 #		print(dockerStats)
 
-# track if there's an old dummy service that wasn't deleted
-	oldDummyService = None
-
 	for serviceId in stackData[myStack]['serviceIds']:
 	#	print (serviceId)
 # in that stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
 		serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 		svc=serviceReq.json()
-		if svc['name'] == 'checkmkDummy':
-			oldDummyService = svc['links']['self']
 		if svc['name'] in monitoredServices:
 			serviceState = 3
 			serviceStateTxt = 'UNKNOWN'
