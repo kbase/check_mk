@@ -103,12 +103,17 @@ def process_section(conf, section):
 			memUse = mylist[1].split(' ')
 			dockerStats[mylist[0]] = memUse[0]
 #		print(dockerStats)
-	
+
+# track if there's an old dummy service that wasn't deleted
+	oldDummyService = None
+
 	for serviceId in stackData[myStack]['serviceIds']:
 	#	print (serviceId)
 # in that stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
 		serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 		svc=serviceReq.json()
+		if svc['name'] == 'checkmkDummy':
+			oldDummyService = svc['links']['self']
 		if svc['name'] in monitoredServices:
 			serviceState = 3
 			serviceStateTxt = 'UNKNOWN'
@@ -258,6 +263,12 @@ def process_section(conf, section):
 	dummyServiceState = 3
 	dummyServiceStateTxt = 'UNKNOWN'
 
+	if (oldDummyService is not None):
+		deleteOldDummySvcReq = session.delete(oldDummyService , auth=(username,password))
+		if not deleteOldDummySvcReq.ok:
+			dummyServiceState = 2
+			dummyServiceStateTxt += ' unable to delete previously created service'
+		
 	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=containerConfig, auth=(username,password))
 	if newSvcReq.ok:
 		newDummyService = newSvcReq.json()
