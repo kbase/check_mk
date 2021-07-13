@@ -288,7 +288,7 @@ def process_section(conf, section):
 
 		if dummySvc['healthState'] == 'healthy':
 			dummyServiceState = 0
-			dummyServiceStateTxt = 'OK'
+			dummyServiceStateTxt = 'OK created new service successfully'
 		if dummySvc['healthState'] == 'unhealthy':
 			dummyServiceState = 2
 			dummyServiceStateTxt = 'CRITICAL: created service but service unhealthy'
