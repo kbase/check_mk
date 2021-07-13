@@ -258,6 +258,9 @@ def process_section(conf, section):
 	dummyServiceState = 3
 	dummyServiceStateTxt = 'UNKNOWN'
 
+# delete the service if it exists (just ignore any error for this)
+	deleteSvcReq = session.delete(newDummyService['links']['self'] , auth=(username,password))
+	time.sleep(5)
 	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=containerConfig, auth=(username,password))
 	if newSvcReq.ok:
 		newDummyService = newSvcReq.json()
