@@ -87,22 +87,24 @@ def process_section(conf, section):
 	stackId = stackData[myStack]['id']
 
 ### this part needs a lot of work
-	memState = 0
-	memStateTxt = 'OK'
-	memCommentTxt = ''
+### moving to separate check_rancher_containers.py till we can figure out how to
+### get stats directly from rancher 1.x API
+#	memState = 0
+#	memStateTxt = 'OK'
+#	memCommentTxt = ''
 ## can only check stats on the local host
 ## to do: try to talk to the websocket to get stats from rancher API instead
-	dockerStats = dict()
+#	dockerStats = dict()
 
 # only get stats if hostid specified (since some hosts' subprocess module is broken)
-	if hostid is not None:
-		dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
-#		print(dockerStatsProc)
-		for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
-			mylist = line.strip("'").split(':')
-			memUse = mylist[1].split(' ')
-			dockerStats[mylist[0]] = memUse[0]
-#		print(dockerStats)
+#	if hostid is not None:
+#		dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
+##		print(dockerStatsProc)
+#		for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
+#			mylist = line.strip("'").split(':')
+#			memUse = mylist[1].split(' ')
+#			dockerStats[mylist[0]] = memUse[0]
+##		print(dockerStats)
 
 # track if there's an old dummy service that wasn't deleted
 	oldDummyService = None
@@ -131,25 +133,25 @@ def process_section(conf, section):
 # if on a host running containers, check their resources
 # assume only one instance per service
 ### this part needs lots of work
-		if hostid is not None:
-			instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
-			rancherInstance=instanceReq.json()
+#		if hostid is not None:
+#			instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
+#			rancherInstance=instanceReq.json()
 # to do: give a hostname, and match it up to the rancher API hostId
 # otherwise, if the hostId changes, such as if a host is removed and added back to Rancher,
 # the container memory check will always be OK
-			if rancherInstance['hostId'] == hostid:
-#				print (rancherInstance['name'] + ' ' + rancherInstance['externalId'])
-				memUse = dockerStats[rancherInstance['externalId']]
-#				print (memUse)
+#			if rancherInstance['hostId'] == hostid:
+##				print (rancherInstance['name'] + ' ' + rancherInstance['externalId'])
+#				memUse = dockerStats[rancherInstance['externalId']]
+##				print (memUse)
 ## crude hack: docker stats outputs human readable.  assume we only care about GB or more use
 ## future: better calculations
-				if 'G' in memUse:
-					memState = 1
-					memStateTxt = 'WARNING'
-					memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ;; ')
+#				if 'G' in memUse:
+#					memState = 1
+#					memStateTxt = 'WARNING'
+#					memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ;; ')
 
-	if hostid is not None:
-		print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory-' + hostid + ' - ' + memStateTxt + ' big mem containers on host ' + hostid + ' : ' + memCommentTxt)
+#	if hostid is not None:
+#		print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory-' + hostid + ' - ' + memStateTxt + ' big mem containers on host ' + hostid + ' : ' + memCommentTxt)
 
 ### spin up a dummy new service
 # initially copied from narrative-traefiker
