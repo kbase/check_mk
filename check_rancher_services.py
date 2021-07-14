@@ -215,7 +215,7 @@ def process_section(conf, section):
                             u'isolation': None,
                             u'kernelMemory': None,
                             u'kind': u'container',
-                            u'labels': {u'io.rancher.scheduler.global':True},
+                            u'labels': {},
                             u'logConfig': {u'config': {}, u'driver': u''},
                             u'memory': None,
                             u'memoryMb': None,
