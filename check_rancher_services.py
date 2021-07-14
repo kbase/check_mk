@@ -281,8 +281,8 @@ def process_section(conf, section):
 		newDummyService = newSvcReq.json()
 # need to sleep, in case an error pops up while creating the service container
 # (for example, can't pull the image)
-# hope 10sec should be enough time; don't want too long or check runs too long on a lot of instances
-		time.sleep(10)
+# hope 30sec should be enough time; don't want too long or check runs too long on a lot of instances
+		time.sleep(30)
 		newSvcState = session.get(newDummyService['links']['self'], auth=(username,password))
 		dummySvc = newSvcState.json()
 
