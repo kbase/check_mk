@@ -158,7 +158,7 @@ def process_section(conf, section):
 #	if hostid is not None:
 #		print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory-' + hostid + ' - ' + memStateTxt + ' big mem containers on host ' + hostid + ' : ' + memCommentTxt)
 
-	if (!conf.has_option(section,'test_create_new')):
+	if (not conf.has_option(section,'test_create_new')):
 		return None
 	if (conf[section]['test_create_new'] != 1):
 		return None
