@@ -160,7 +160,7 @@ def process_section(conf, section):
 
 	if (not conf.has_option(section,'test_create_new')):
 		return None
-	if (conf[section]['test_create_new'] != 1):
+	if (conf.getboolean(section,'test_create_new') is False):
 		return None
 
 ### spin up a dummy new service
