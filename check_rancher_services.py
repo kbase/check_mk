@@ -289,6 +289,8 @@ def process_section(conf, section):
 			newSvcState = session.get(newDummyService['links']['self'], auth=(username,password))
 			dummySvc = newSvcState.json()
 
+			# this doesn't detect if the service has been deleted
+			# (but does detect if existing service is not healthy)
 			if dummySvc['healthState'] == 'healthy':
 				dummyServiceState = 0
 				dummyServiceStateTxt = 'OK created new service successfully'
@@ -304,7 +306,8 @@ def process_section(conf, section):
 
 	else:
 		dummyServiceState = 2
-		dummyServiceStateTxt = 'CRITICAL did not get 200 creating service'
+		dummyServiceStateTxt = 'CRITICAL did not get 200 creating service: ' + str(newSvcReq.text)
+
 	print (str(dummyServiceState) + ' ' + envname + '_' + stackname + '_createNewService - ' + dummyServiceStateTxt)
 
 
