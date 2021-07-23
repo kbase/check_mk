@@ -284,19 +284,19 @@ def process_section(conf, section):
 	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=containerConfig, auth=(username,password))
 	if newSvcReq.ok:
 		newDummyService = newSvcReq.json()
-# need to sleep, in case an error pops up while creating the service container
-# (for example, can't pull the image)
-# hope 30sec should be enough time; don't want too long or check runs too long on a lot of instances
-		time.sleep(30)
-		newSvcState = session.get(newDummyService['links']['self'], auth=(username,password))
-		dummySvc = newSvcState.json()
+		for i in range(5):
+			time.sleep(5)
+			newSvcState = session.get(newDummyService['links']['self'], auth=(username,password))
+			dummySvc = newSvcState.json()
 
-		if dummySvc['healthState'] == 'healthy':
-			dummyServiceState = 0
-			dummyServiceStateTxt = 'OK created new service successfully'
-		if dummySvc['healthState'] == 'unhealthy':
-			dummyServiceState = 2
-			dummyServiceStateTxt = 'CRITICAL: created service but service unhealthy, state ' + str(dummySvc['healthState'])
+			if dummySvc['healthState'] == 'healthy':
+				dummyServiceState = 0
+				dummyServiceStateTxt = 'OK created new service successfully'
+				break
+			if dummySvc['healthState'] != 'healthy':
+				dummyServiceState = 2
+				dummyServiceStateTxt = 'CRITICAL: created service but service not healthy, state ' + str(dummySvc['healthState'])
+
 		deleteSvcReq = session.delete(newDummyService['links']['self'] , auth=(username,password))
 		if not deleteSvcReq.ok:
 			dummyServiceState = 2
