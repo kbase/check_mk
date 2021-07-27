@@ -290,16 +290,16 @@ def process_section(conf, section):
 			dummyServiceState = 0
 			dummyServiceStateTxt = 'OK created new service successfully'
 		if dummySvc['healthState'] == 'unhealthy':
-			dummyServiceState = 2
-			dummyServiceStateTxt = 'CRITICAL: created service but service unhealthy'
+			dummyServiceState = 1
+			dummyServiceStateTxt = 'WARNING: created service but service unhealthy'
 		deleteSvcReq = session.delete(newDummyService['links']['self'] , auth=(username,password))
 		if not deleteSvcReq.ok:
 			dummyServiceState = 2
 			dummyServiceStateTxt += ' unable to delete created service'
 
 	else:
-		dummyServiceState = 2
-		dummyServiceStateTxt = 'CRITICAL did not get 200 creating service'
+		dummyServiceState = 1
+		dummyServiceStateTxt = 'WARNING: did not get 200 creating service'
 	print (str(dummyServiceState) + ' ' + envname + '_' + stackname + '_createNewService - ' + dummyServiceStateTxt)
 
 
