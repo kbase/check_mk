@@ -307,7 +307,6 @@ def process_section(conf, section):
 	else:
 		dummyServiceState = 1
 		dummyServiceStateTxt = 'WARNING: did not get 200 creating service: ' + str(newSvcReq.text)
-
 	print (str(dummyServiceState) + ' ' + envname + '_' + stackname + '_createNewService - ' + dummyServiceStateTxt)
 
 
