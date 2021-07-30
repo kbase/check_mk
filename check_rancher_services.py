@@ -142,11 +142,11 @@ def process_section(conf, section):
 		if stackData[myStack]['healthState'] == 'healthy':
 			stackState = 0
 			stackStateTxt = 'OK'
-		if stackData[myStack]['healthState'] == 'unhealthy':
+		if stackData[myStack]['healthState'] == 'degraded':
 			stackState = 1
 			stackStateTxt = 'WARNING'
 
-		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt )
+		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState]')
 
 # if on a host running containers, check their resources
 # assume only one instance per service
