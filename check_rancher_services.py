@@ -146,7 +146,7 @@ def process_section(conf, section):
 			stackState = 1
 			stackStateTxt = 'WARNING'
 
-		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState]')
+		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'])
 
 # if on a host running containers, check their resources
 # assume only one instance per service
