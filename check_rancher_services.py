@@ -135,6 +135,19 @@ def process_section(conf, section):
 			print (str(serviceState) + ' ' + envname + '_' + stackname + '_' + svc['name'] + ' - ' + serviceStateTxt + ' running instances: ' + str(svc['currentScale']))
 	#	    print svc['healthState']
 
+	if (conf.has_option(section,'test_stack_health') and conf.getboolean(section,'test_stack_health') is True):
+		stackState = 3
+		stackStateTxt = 'UNKNOWN'
+
+		if stackData[myStack]['healthState'] == 'healthy':
+			stackState = 0
+			stackStateTxt = 'OK'
+		if stackData[myStack]['healthState'] == 'unhealthy':
+			stackState = 1
+			stackStateTxt = 'WARNING'
+
+		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt )
+
 # if on a host running containers, check their resources
 # assume only one instance per service
 ### this part needs lots of work
