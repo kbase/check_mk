@@ -9,7 +9,7 @@ import sys
 # there is a way to only disable InsecurePlatformWarning but I can't find it now
 urllib3.disable_warnings()
 
-catalog_url = sys.argv[0]
+catalog_url = sys.argv[1]
 
 # curl -d '{"params":["bsadkhin"],"method":"Catalog.list_favorites","version":"1.1","id":1}' catalog_url
 list_favorites_query = {
