@@ -29,8 +29,6 @@ parser = optparse.OptionParser(usage=usage)
 parser.add_option("-v", "--verbose" , action="store_true" , dest="verbose" , help="verbose mode.")
 parser.add_option("-p", "--proc" ,    action="store_true" , dest="proc" ,    help="to use the soft/hard limits from /proc/pid as the warning/critical thresholds.")
 
-parser.add_option("-f", "--file",     dest="file",         type="string", help=".pid file containing the process pid.")
-
 #parser.add_option("-p", "--pid",     dest="pid",             type="int", help="pid to check out.") 
 parser.add_option("-w", "--warn",     dest="warn_value",   default="-1",     type="int", help="warning threshold.")
 parser.add_option("-c", "--crit",     dest="crit_value",   default="-1",     type="int", help="critical threshold.")
@@ -40,13 +38,8 @@ parser.add_option("-c", "--crit",     dest="crit_value",   default="-1",     typ
 if len(args) != 0:
     fail( parser.print_help() )
 
-#assert options.pid > 0
-
 import os
 import sys
-
-if options.verbose : print ("Checking if the provided string: " + options.file + " is really a file.")
-assert os.path.isfile(options.file)
 
 def check_pid(pid):
   if options.proc :
@@ -85,17 +78,6 @@ def check_pid(pid):
 
   print ("{0}: Process {1} has {2} file descriptors opened|num_fds={2};{3};{4};;".format(status_dict[status], str( pid ), str( num_fds ), str(options.warn_value), str(options.crit_value) ) )
   return status
-
-try:
-  if options.verbose : print ("Opening file: " + options.file)
-  pidfile = open(options.file,'r')
-  pid     = int ( pidfile.readline() )
-  if options.verbose : print ( "Found pid: " + str( pid ) )
-  if options.verbose : print ( "Checking if the pid=" + str( pid )  + " is a live process." )
-  assert psutil.pid_exists( pid )
-except IOError:
-  print ("Can't open the file %s", options.file)
-  sys.exit(1)   
 
 for pid in (psutil.pids()):
   status=check_pid(pid)
