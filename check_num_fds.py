@@ -21,13 +21,13 @@ except ImportError:
 import optparse
 
 usage = """
-Typically %prog is invoked by the nrpe service that runs as the user nagios: 
 
-sudo %prog -p -f /var/run/mydaemon.pid
+%prog -p
+%prog -w 1024 -c 2048
 """
 parser = optparse.OptionParser(usage=usage)
 parser.add_option("-v", "--verbose" , action="store_true" , dest="verbose" , help="verbose mode.")
-parser.add_option("-p", "--proc" ,    action="store_true" , dest="proc" ,    help="to use the soft/hard limits from /proc/pid as the warning/critical thresholds.")
+parser.add_option("-p", "--proc" ,    action="store_true" , dest="proc" ,    help="to use the soft/hard limits from /proc/pid as the warning/critical thresholds (overrides -w and -c.")
 
 parser.add_option("-w", "--warn",     dest="warn_value",   default="-1",     type="int", help="warning threshold.")
 parser.add_option("-c", "--crit",     dest="crit_value",   default="-1",     type="int", help="critical threshold.")
