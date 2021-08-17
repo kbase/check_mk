@@ -46,7 +46,7 @@ if options.verbose : print ("Checking if the provided string: " + options.file +
 assert os.path.isfile(options.file)
 
 try:
-  if options.verbose : print "Opening file: " + options.file
+  if options.verbose : print ("Opening file: " + options.file)
   pidfile = open(options.file,'r')
   pid     = int ( pidfile.readline() )
   if options.verbose : print "Found pid: " + str( pid )
