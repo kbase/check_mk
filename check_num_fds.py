@@ -42,7 +42,7 @@ if len(args) != 0:
 import os
 import sys
 
-if options.verbose : print "Checking if the provided string: " + options.file + " is really a file."
+if options.verbose : print ("Checking if the provided string: " + options.file + " is really a file.")
 assert os.path.isfile(options.file)
 
 try:
@@ -53,25 +53,25 @@ try:
   if options.verbose : print "Checking if the pid=" + str( pid )  + " is a live process." 
   assert psutil.pid_exists( pid )
 except IOError:
-  print "Can't open the file %s", options.file
+  print ("Can't open the file %s", options.file)
   sys.exit(1)   
 
 if options.proc :
   try:
-    if options.verbose : print "Opening the file: /proc/"+str( pid )+"/limits"
+    if options.verbose : print ("Opening the file: /proc/"+str( pid )+"/limits")
     procfile = open('/proc/'+str( pid )+'/limits','r')
     for line in procfile:
-      if options.verbose : print "Searching for the 'Max open files' settings in: " + line
+      if options.verbose : print ("Searching for the 'Max open files' settings in: " + line)
       if "Max open files" in line : 
            mylist = [ int(s) for s in line.split() if s.isdigit()]
            options.warn_value = mylist[0]
            options.crit_value = mylist[1]
-           if options.verbose : print "Found soft limit: " + str( options.warn_value )
-           if options.verbose : print "Found hard limit: " + str( options.crit_value )
+           if options.verbose : print ( "Found soft limit: " + str( options.warn_value ) )
+           if options.verbose : print ( "Found hard limit: " + str( options.crit_value ) )
            break
 
   except IOError:
-    print "Can't open the file %s", options.file
+    print ( "Can't open the file %s", options.file)
     sys.exit(1)
 
 
@@ -92,5 +92,5 @@ elif num_fds > options.warn_value:
 else:
     status=0
 
-print "{0}: Process {1} has {2} file descriptors opened|num_fds={2};{3};{4};;".format(status_dict[status], str( pid ), str( num_fds ), str(options.warn_value), str(options.crit_value) )
+print ("{0}: Process {1} has {2} file descriptors opened|num_fds={2};{3};{4};;".format(status_dict[status], str( pid ), str( num_fds ), str(options.warn_value), str(options.crit_value) ) )
 exit(status)
