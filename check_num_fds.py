@@ -4,8 +4,11 @@
 
 # Forked from https://bitbucket.org/fabio79ch/check_num_fds/src/master/check_num_fds.py .
 
+# psutil in Python3 does not seem to support num_fds, which is pretty important.
+# So we'll leave this as Python2 for now.
+
 # Usage:
-# sudo ./check_num_fds.py -p -f /var/run/mydaemon.pid 
+# check_num_fds.py -p -f /var/run/mydaemon.pid 
 # OK: Process 13403 has 4037 file descriptors opened|num_fds=4037;6000;6000;;
 
 # http://exchange.nagios.org/directory/Plugins/Operating-Systems/Linux/check_num_fds/details
