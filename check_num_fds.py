@@ -84,7 +84,7 @@ for pid in (psutil.pids()):
   if num_fds > options.crit_value:
     bad_pids[pid] = num_fds
     status = 2
-  elsif num_fds > options.warn_value:
+  elseif num_fds > options.warn_value:
     bad_pids[pid] = num_fds
     if status == 0: status = 1
 
