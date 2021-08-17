@@ -49,8 +49,8 @@ try:
   if options.verbose : print ("Opening file: " + options.file)
   pidfile = open(options.file,'r')
   pid     = int ( pidfile.readline() )
-  if options.verbose : print "Found pid: " + str( pid )
-  if options.verbose : print "Checking if the pid=" + str( pid )  + " is a live process." 
+  if options.verbose : print ( "Found pid: " + str( pid ) )
+  if options.verbose : print ( "Checking if the pid=" + str( pid )  + " is a live process." )
   assert psutil.pid_exists( pid )
 except IOError:
   print ("Can't open the file %s", options.file)
