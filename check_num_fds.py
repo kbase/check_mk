@@ -58,10 +58,10 @@ status = 0
 for pid in (psutil.pids()):
   num_fds=check_pid(pid)
   if num_fds > options.crit_value:
-    bad_pids[pid] = {'pid':pid,'num_fds':num_fds}
+    bad_pids[pid] = {'PID':pid,'num_fds':num_fds}
     status = 2
   elif num_fds > options.warn_value:
-    bad_pids[pid] = {'pid':pid,'num_fds':num_fds}
+    bad_pids[pid] = {'PID':pid,'num_fds':num_fds}
     if status == 0: status = 1
 
 print ("{}: ".format(status_dict[status]) + str(bad_pids.values() ) )
