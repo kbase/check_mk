@@ -3,14 +3,13 @@
 # Nagios check to monitor the number of files opened by a process. 
 
 # Forked from https://bitbucket.org/fabio79ch/check_num_fds/src/master/check_num_fds.py .
+# http://exchange.nagios.org/directory/Plugins/Operating-Systems/Linux/check_num_fds/details
 
 # Requires psutil 5.6.1 (or better?).
 
 # Usage:
-# check_num_fds.py -p -f /var/run/mydaemon.pid 
-# OK: Process 13403 has 4037 file descriptors opened|num_fds=4037;6000;6000;;
-
-# http://exchange.nagios.org/directory/Plugins/Operating-Systems/Linux/check_num_fds/details
+# check_num_fds.py -w 1000 -c 2000
+# OK: bad pids: dict_values([])
 
 try:
     import psutil
