@@ -22,16 +22,11 @@ import optparse
 
 usage = """
 
-%prog -p
-
-or
-
 %prog -w 1024 -c 2048
 """
 
 parser = optparse.OptionParser(usage=usage)
 parser.add_option("-v", "--verbose" , action="store_true" , dest="verbose" , help="verbose mode.")
-parser.add_option("-p", "--proc" ,    action="store_true" , dest="proc" ,    help="to use the soft/hard limits from /proc/pid as the warning/critical thresholds (overrides -w and -c.")
 
 parser.add_option("-w", "--warn",     dest="warn_value",   default="-1",     type="int", help="warning threshold.")
 parser.add_option("-c", "--crit",     dest="crit_value",   default="-1",     type="int", help="critical threshold.")
@@ -45,26 +40,6 @@ import os
 import sys
 
 def check_pid(pid):
-  if options.proc :
-    try:
-      limitsfile = '/proc/'+str( pid )+'/limits'
-      if options.verbose : print ("Opening the file: %s", limitsfile)
-      procfile = open(limitsfile,'r')
-      for line in procfile:
-        if options.verbose : print ("Searching for the 'Max open files' settings in: " + line)
-        if "Max open files" in line : 
-             mylist = [ int(s) for s in line.split() if s.isdigit()]
-             options.warn_value = mylist[0]
-             options.crit_value = mylist[1]
-             if options.verbose : print ( "Found soft limit: " + str( options.warn_value ) )
-             if options.verbose : print ( "Found hard limit: " + str( options.crit_value ) )
-             break
-
-    except IOError:
-      # probably just a transient process, ignore
-      if options.verbose: print ( "Can't open the file %s", limitsfile)
-      return 3
-
 # Getting the number of files opened by pid
   num_fds = psutil.Process( pid ).num_fds()
 
