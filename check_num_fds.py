@@ -58,7 +58,7 @@ def check_pid(pid):
 
     except IOError:
       print ( "Can't open the file %s", limitsfile)
-      sys.exit(1)
+      return 3
 
 # Getting the number of files opened by pid
   num_fds = psutil.Process( pid ).num_fds()
