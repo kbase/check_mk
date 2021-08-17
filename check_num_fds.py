@@ -38,6 +38,7 @@ if len(args) != 0:
 
 import os
 import sys
+import pprint
 
 def check_pid(pid):
 # Getting the number of files opened by pid
@@ -63,7 +64,7 @@ for pid in (psutil.pids()):
     bad_pids[pid] = num_fds
     if status == 0: status = 1
 
-print ("{}: {}".format(status_dict[status]),bad_pids )
+pprint.pprint ("{}: {}".format(status_dict[status]),bad_pids )
 #  print ("{0}: Process {1} has {2} file descriptors opened|num_fds={2};{3};{4};;".format(status_dict[status], str( pid ), str( num_fds ), str(options.warn_value), str(options.crit_value) ) )
 
 exit(status)
