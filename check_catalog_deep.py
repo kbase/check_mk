@@ -1,9 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # This is used to do a deep catalog ping as per #DEVOPS-459
 # These checks excercises endpoints that require a connection to MongoDB, (rather than just the status endpoint)
 
 import requests
-
 import urllib3
 
 # there is a way to only disable InsecurePlatformWarning but I can't find it now
@@ -31,15 +30,15 @@ exception = None
 
 for query in [list_favorites_query, list_favorite_counts]:
     result = requests.get(catalog_url, json=query)
-
     try:
         result_json = result.json()['result'][0]
         assert len(result_json) > 1
     except Exception as e:
         catalog_ok = False
-        print('2 - CRITICAL - catalog deep ping failed. Likely there is a problem with mongo, and the catalog container requires a restart:', e)
+        print(
+            '2 - CRITICAL - catalog deep ping failed. Likely there is a problem with mongo, and the catalog container requires a restart:',
+            e)
         break
-        
+
 if catalog_ok:
     print('0 - OK - Catalog Deep Ping ')
-    
