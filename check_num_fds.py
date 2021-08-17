@@ -97,6 +97,7 @@ except IOError:
   print ("Can't open the file %s", options.file)
   sys.exit(1)   
 
-status=check_pid(pid)
+for pid in (psutil.pids()):
+  status=check_pid(pid)
 
 exit(status)
