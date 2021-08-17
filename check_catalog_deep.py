@@ -27,6 +27,7 @@ list_favorite_counts = {
 }
 
 catalog_ok = True
+exception = None
 
 for query in [list_favorites_query, list_favorite_counts]:
     result = requests.get(catalog_url, json=query)
@@ -36,8 +37,9 @@ for query in [list_favorites_query, list_favorite_counts]:
         assert len(result_json) > 1
     except Exception as e:
         catalog_ok = False
-
+        print('2 - CRITICAL - catalog deep ping failed. Likely there is a problem with mongo, and the catalog container requires a restart:', e)
+        break
+        
 if catalog_ok:
     print('0 - OK - Catalog Deep Ping ')
-else:
-    print('2 - CRITICAL - catalog deep ping failed ')
+    
