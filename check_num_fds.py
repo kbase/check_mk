@@ -74,17 +74,13 @@ def check_pid(pid):
   assert options.warn_value > 0
   assert options.crit_value > 0
 
-# Nagios possible states
-  status_dict= {0:"OK",1:"WARNING",2:"CRITICAL",3:"UNKNOWN"}
-
   if num_fds > options.crit_value:
       status=2
   elif num_fds > options.warn_value:
       status=1
   else:
       status=0
-
-  print ("{0}: Process {1} has {2} file descriptors opened|num_fds={2};{3};{4};;".format(status_dict[status], str( pid ), str( num_fds ), str(options.warn_value), str(options.crit_value) ) )
+  return status
 
 try:
   if options.verbose : print ("Opening file: " + options.file)
@@ -97,6 +93,10 @@ except IOError:
   print ("Can't open the file %s", options.file)
   sys.exit(1)   
 
-check_pid(pid)
+status=check_pid(pid)
+# Nagios possible states
+status_dict= {0:"OK",1:"WARNING",2:"CRITICAL",3:"UNKNOWN"}
+
+print ("{0}: Process {1} has {2} file descriptors opened|num_fds={2};{3};{4};;".format(status_dict[status], str( pid ), str( num_fds ), str(options.warn_value), str(options.crit_value) ) )
 
 exit(status)
