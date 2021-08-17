@@ -57,7 +57,8 @@ def check_pid(pid):
              break
 
     except IOError:
-      print ( "Can't open the file %s", limitsfile)
+      # probably just a transient process, ignore
+      if options.verbose: print ( "Can't open the file %s", limitsfile)
       return 3
 
 # Getting the number of files opened by pid
