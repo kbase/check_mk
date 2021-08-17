@@ -46,23 +46,26 @@ def check_pid(pid):
 
   return num_fds
 
-bad_pids = dict()
+####
 
 assert options.warn_value > 0
-assert options.crit_value > 0
+assert options.crit_value > options.warn_value
 
-# Nagios possible states
-status_dict= {0:"OK",1:"WARNING",2:"CRITICAL",3:"UNKNOWN"}
 
+bad_pids = dict()
 status = 0
+
 for pid in (psutil.pids()):
   num_fds=check_pid(pid)
   if num_fds > options.crit_value:
-    bad_pids[pid] = {'PID':pid,'num_fds':num_fds}
+    bad_pids[pid] = {'pid':pid,'num_fds':num_fds}
     status = 2
   elif num_fds > options.warn_value:
-    bad_pids[pid] = {'PID':pid,'num_fds':num_fds}
+    bad_pids[pid] = {'pid':pid,'num_fds':num_fds}
     if status == 0: status = 1
+
+# Nagios possible states
+status_dict= {0:"OK",1:"WARNING",2:"CRITICAL",3:"UNKNOWN"}
 
 print ("{}: ".format(status_dict[status]) + str(bad_pids.values() ) )
 #  print ("{0}: Process {1} has {2} file descriptors opened|num_fds={2};{3};{4};;".format(status_dict[status], str( pid ), str( num_fds ), str(options.warn_value), str(options.crit_value) ) )
