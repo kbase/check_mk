@@ -5,6 +5,7 @@
 # Forked from https://bitbucket.org/fabio79ch/check_num_fds/src/master/check_num_fds.py .
 
 # psutil in Python3 does not seem to support num_fds, which is pretty important.
+# (could just be our old python3 is broken?)
 # So we'll leave this as Python2 for now.
 
 # Usage:
