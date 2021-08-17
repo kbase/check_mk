@@ -23,8 +23,12 @@ import optparse
 usage = """
 
 %prog -p
+
+or
+
 %prog -w 1024 -c 2048
 """
+
 parser = optparse.OptionParser(usage=usage)
 parser.add_option("-v", "--verbose" , action="store_true" , dest="verbose" , help="verbose mode.")
 parser.add_option("-p", "--proc" ,    action="store_true" , dest="proc" ,    help="to use the soft/hard limits from /proc/pid as the warning/critical thresholds (overrides -w and -c.")
@@ -64,22 +68,27 @@ def check_pid(pid):
 # Getting the number of files opened by pid
   num_fds = psutil.Process( pid ).num_fds()
 
-  assert options.warn_value > 0
-  assert options.crit_value > 0
+  return num_fds
 
-  if num_fds > options.crit_value:
-      status=2
-  elif num_fds > options.warn_value:
-      status=1
-  else:
-      status=0
+bad_pids = dict()
+
+assert options.warn_value > 0
+assert options.crit_value > 0
+
 # Nagios possible states
-  status_dict= {0:"OK",1:"WARNING",2:"CRITICAL",3:"UNKNOWN"}
+status_dict= {0:"OK",1:"WARNING",2:"CRITICAL",3:"UNKNOWN"}
 
-  print ("{0}: Process {1} has {2} file descriptors opened|num_fds={2};{3};{4};;".format(status_dict[status], str( pid ), str( num_fds ), str(options.warn_value), str(options.crit_value) ) )
-  return status
-
+status = 0
 for pid in (psutil.pids()):
-  status=check_pid(pid)
+  num_fds=check_pid(pid)
+  if num_fds > options.crit_value:
+    bad_pids[pid] = num_fds
+    status = 2
+  else num_fds > options.warn_value:
+    bad_pids[pid] = num_fds
+    if status == 0: status = 1
+
+print ("{}: ".format(status_dict[status]) )
+#  print ("{0}: Process {1} has {2} file descriptors opened|num_fds={2};{3};{4};;".format(status_dict[status], str( pid ), str( num_fds ), str(options.warn_value), str(options.crit_value) ) )
 
 exit(status)
