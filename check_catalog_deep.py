@@ -4,20 +4,21 @@
 
 import requests
 import urllib3
+import sys
 
 # there is a way to only disable InsecurePlatformWarning but I can't find it now
 urllib3.disable_warnings()
 
-catalog_url = 'https://kbase.us/services/catalog'
+catalog_url = sys.argv[0]
 
-# curl -d '{"params":["bsadkhin"],"method":"Catalog.list_favorites","version":"1.1","id":1}'  https://kbase.us/services/catalog
+# curl -d '{"params":["bsadkhin"],"method":"Catalog.list_favorites","version":"1.1","id":1}' catalog_url
 list_favorites_query = {
     "id": 47,
     "version": "1.1",
     "method": "Catalog.list_favorites",
     "params": ["bsadkhin"]
 }
-# curl -d '{"params":[{}],"method":"Catalog.list_favorite_counts","version":"1.1","id":1}'  https://kbase.us/services/catalog
+# curl -d '{"params":[{}],"method":"Catalog.list_favorite_counts","version":"1.1","id":1}' catalog_url
 list_favorite_counts = {
     "id": 47,
     "version": "1.1",
