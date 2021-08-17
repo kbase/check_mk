@@ -29,7 +29,6 @@ parser = optparse.OptionParser(usage=usage)
 parser.add_option("-v", "--verbose" , action="store_true" , dest="verbose" , help="verbose mode.")
 parser.add_option("-p", "--proc" ,    action="store_true" , dest="proc" ,    help="to use the soft/hard limits from /proc/pid as the warning/critical thresholds.")
 
-#parser.add_option("-p", "--pid",     dest="pid",             type="int", help="pid to check out.") 
 parser.add_option("-w", "--warn",     dest="warn_value",   default="-1",     type="int", help="warning threshold.")
 parser.add_option("-c", "--crit",     dest="crit_value",   default="-1",     type="int", help="critical threshold.")
 
@@ -44,8 +43,9 @@ import sys
 def check_pid(pid):
   if options.proc :
     try:
-      if options.verbose : print ("Opening the file: /proc/"+str( pid )+"/limits")
-      procfile = open('/proc/'+str( pid )+'/limits','r')
+      limitsfile = /proc/"+str( pid )+"/limits"
+      if options.verbose : print ("Opening the file: %s", limitsfile)
+      procfile = open(limitsfile,'r')
       for line in procfile:
         if options.verbose : print ("Searching for the 'Max open files' settings in: " + line)
         if "Max open files" in line : 
@@ -57,9 +57,8 @@ def check_pid(pid):
              break
 
     except IOError:
-      print ( "Can't open the file %s", options.file)
+      print ( "Can't open the file %s", limitsfile)
       sys.exit(1)
-
 
 # Getting the number of files opened by pid
   num_fds = psutil.Process( pid ).num_fds()
