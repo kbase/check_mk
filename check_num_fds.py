@@ -67,7 +67,7 @@ for pid in (psutil.pids()):
 # Nagios possible states
 status_dict= {0:"OK",1:"WARNING",2:"CRITICAL",3:"UNKNOWN"}
 
-print ("{}: ".format(status_dict[status]) + str(bad_pids.values() ) )
+print ("{}: bad pids: ".format(status_dict[status]) + str(bad_pids.values() ) )
 #  print ("{0}: Process {1} has {2} file descriptors opened|num_fds={2};{3};{4};;".format(status_dict[status], str( pid ), str( num_fds ), str(options.warn_value), str(options.crit_value) ) )
 
 exit(status)
