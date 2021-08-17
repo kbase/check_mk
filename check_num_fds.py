@@ -43,7 +43,7 @@ import sys
 def check_pid(pid):
   if options.proc :
     try:
-      limitsfile = /proc/"+str( pid )+"/limits"
+      limitsfile = '/proc/'+str( pid )+'/limits'
       if options.verbose : print ("Opening the file: %s", limitsfile)
       procfile = open(limitsfile,'r')
       for line in procfile:
