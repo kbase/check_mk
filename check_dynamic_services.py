@@ -4,15 +4,15 @@ import sys
 import requests
 import json
 
-#import urllib3
+import urllib3
 # there is a way to only disable InsecurePlatformWarning but I can't find it now
-#urllib3.disable_warnings()
+urllib3.disable_warnings()
 
 sw_url = sys.argv[1]
 services = sys.argv[2:]
 
-#print sw_url
-#print services
+#print (sw_url)
+#print (services)
 
 
 for dynsvc in services:
@@ -26,7 +26,7 @@ for dynsvc in services:
         }]
     }
 
-    swreq=requests.post(sw_url, json=swdata)
+    swreq=requests.post(sw_url, json=swdata, verify=False)
 
     try:
         dynsvcurl = swreq.json()['result'][0]['url']
@@ -41,7 +41,7 @@ for dynsvc in services:
          "params": []
     }
     
-    dynsvcreq = requests.post(dynsvcurl,json=dynsvcdata)
+    dynsvcreq = requests.post(dynsvcurl,json=dynsvcdata, verify=False)
     try:
         dynsvcstate = dynsvcreq.json()['result'][0]['state']
     except:
