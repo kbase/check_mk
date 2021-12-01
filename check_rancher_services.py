@@ -157,11 +157,12 @@ def process_section(conf, section):
 		if stackData[myStack]['healthState'] == 'degraded':
 			stackState = 1
 			stackStateTxt = 'WARNING'
-			if (conf.has_option(section,'stack_health_dir') and stackPath.exists()):
+			if (conf.has_option(section,'stack_health_dir') and conf.has_option(section,'stack_health_age') and stackPath.exists()):
 			    # check age, if too old, make state critical
 			    # if missing, don't do anything?
-			    time.sleep(5)
-			    pprint (time.time() - stackPath.stat().st_mtime)
+			    if (time.time() - stackPath.stat().st_mtime > float(conf[section]['stack_health_age'])):
+			        stackState = 2
+			        stackStateTxt = 'CRITICAL'
 
 		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'])
 
