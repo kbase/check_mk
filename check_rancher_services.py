@@ -154,7 +154,9 @@ def process_section(conf, section):
 			stackStateTxt = 'OK'
 			if (conf.has_option(section,'stack_health_dir')):
 			    stackPath.touch()
-		if stackData[myStack]['healthState'] == 'degraded':
+#		if stackData[myStack]['healthState'] == 'degraded':
+		# this may be too broad, but let's see if it's a problem
+		else:
 			stackState = 1
 			stackStateTxt = 'WARNING'
 			if (conf.has_option(section,'stack_health_dir') and conf.has_option(section,'stack_health_age') and stackPath.exists()):
