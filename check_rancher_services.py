@@ -157,6 +157,7 @@ def process_section(conf, section):
 			if (conf.has_option(section,'stack_health_dir') and stackPath.exists()):
 			    # check age, if too old, make state critical
 			    # if missing, don't do anything?
+			    time.sleep(5)
 			    pprint (stackPath.stat().st_mtime - time.time())
 
 		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'])
