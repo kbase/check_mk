@@ -145,7 +145,7 @@ def process_section(conf, section):
 			stackState = 0
 			stackStateTxt = 'OK'
 			if (conf.has_option(section,'stack_health_dir')):
-			    stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth
+			    stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth'
 			    pathlib.Path(stackHealthFile).touch()
 		if stackData[myStack]['healthState'] == 'degraded':
 			stackState = 1
