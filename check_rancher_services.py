@@ -146,7 +146,7 @@ def process_section(conf, section):
 		    stackPath = pathlib.Path(stackHealthFile)
 		    # make sure the file exists, in case stack has never been healthy
 		    # (should also error immediately if a bad path is provided in the config file)
-		    if (! stackPath.exists()):
+		    if (not stackPath.exists()):
 		        stackPath.touch()
 			
 		if stackData[myStack]['healthState'] == 'healthy':
