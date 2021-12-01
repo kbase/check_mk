@@ -144,14 +144,17 @@ def process_section(conf, section):
 		if (conf.has_option(section,'stack_health_dir')):
 		    stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth'
 		    stackPath = pathlib.Path(stackHealthFile)
-
+		    # make sure the file exists, in case stack has never been healthy
+		    # (should also error immediately if a bad path is provided in the config file)
+		    unless (stackPath.exists()):
+		        stackPath.touch()
+			
 		if stackData[myStack]['healthState'] == 'healthy':
 			stackState = 0
 			stackStateTxt = 'OK'
 			if (conf.has_option(section,'stack_health_dir')):
 			    stackPath.touch()
-#		if stackData[myStack]['healthState'] == 'degraded':
-		if stackData[myStack]['healthState'] == 'healthy':
+		if stackData[myStack]['healthState'] == 'degraded':
 			stackState = 1
 			stackStateTxt = 'WARNING'
 			if (conf.has_option(section,'stack_health_dir') and stackPath.exists()):
