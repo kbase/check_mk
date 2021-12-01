@@ -158,7 +158,7 @@ def process_section(conf, section):
 			    # check age, if too old, make state critical
 			    # if missing, don't do anything?
 			    pprint (stackPath.stat().st_mtime)
-			    pprint (time.time.gmtime())
+			    pprint (time.gmtime())
 
 		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'])
 
