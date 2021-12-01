@@ -141,15 +141,23 @@ def process_section(conf, section):
 		stackState = 3
 		stackStateTxt = 'UNKNOWN'
 
+		if (conf.has_option(section,'stack_health_dir')):
+		    stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth'
+		    stackPath = pathlib.Path(stackHealthFile)
+
 		if stackData[myStack]['healthState'] == 'healthy':
 			stackState = 0
 			stackStateTxt = 'OK'
 			if (conf.has_option(section,'stack_health_dir')):
-			    stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth'
-			    pathlib.Path(stackHealthFile).touch()
-		if stackData[myStack]['healthState'] == 'degraded':
+			    stackPath.touch()
+#		if stackData[myStack]['healthState'] == 'degraded':
+		if stackData[myStack]['healthState'] == 'healthy':
 			stackState = 1
 			stackStateTxt = 'WARNING'
+			if (conf.has_option(section,'stack_health_dir') and stackPath.exists()):
+			    # check age, if too old, make state critical
+			    # if missing, don't do anything?
+			    print stackPath.stat()
 
 		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'])
 
