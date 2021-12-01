@@ -162,7 +162,7 @@ def process_section(conf, section):
 			    # if missing, don't do anything?
 			    if (time.time() - stackPath.stat().st_mtime > float(conf[section]['stack_health_age'])):
 			        stackState = 2
-			        stackStateTxt = 'CRITICAL (state ' + time.time - stackPath.stat().st_mtime + 'sec old) '
+			        stackStateTxt = 'CRITICAL (state ' + str(time.time() - stackPath.stat().st_mtime) + 'sec old) '
 
 		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'])
 
