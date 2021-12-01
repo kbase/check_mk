@@ -13,6 +13,8 @@ import configparser
 import json
 import subprocess
 import time
+# this requires python 3.4
+import pathlib
 from pprint import pprint
 
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
@@ -142,6 +144,9 @@ def process_section(conf, section):
 		if stackData[myStack]['healthState'] == 'healthy':
 			stackState = 0
 			stackStateTxt = 'OK'
+			if (conf.has_option(section,'stack_health_dir'):
+			    stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth
+			    pathlib.Path(stackHealthFile).touch()
 		if stackData[myStack]['healthState'] == 'degraded':
 			stackState = 1
 			stackStateTxt = 'WARNING'
