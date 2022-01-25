@@ -51,7 +51,7 @@ if (critCount > 0):
   statusText = 'CRITICAL'
   extraText = str(critCount) + ' PROC events found older than ' + str(critInterval) + ' seconds'
 
-print str(status) + ' searcheventage' + ' - ' + statusText + ' ' + extraText
+print (str(status) + ' searcheventage' + ' - ' + statusText + ' ' + extraText)
 
 eventCount={}
 eventCount['UNPROC'] = events.find({"status":"UNPROC"}).count()
