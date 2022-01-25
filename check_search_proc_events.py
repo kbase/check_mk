@@ -71,7 +71,7 @@ for eventstate in ('READY','UNPROC'):
 	if (eventCount[eventstate] > countsStatus[eventstate]['crit']):
 		countStatus=2
 		countStatusText='CRITICAL'
-	print str(countStatus) + ' searcheventcount_' + eventstate + ' eventcount=' + str(eventCount[eventstate]) + '|totaleventcount=' + str(totalEventCount) + ' ' + countStatusText + ' ' + extraText
+	print (str(countStatus) + ' searcheventcount_' + eventstate + ' eventcount=' + str(eventCount[eventstate]) + '|totaleventcount=' + str(totalEventCount) + ' ' + countStatusText + ' ' + extraText)
 
 #updte: {$lt: ISODate("2018-02-27T19:46:00.000Z")
 
