@@ -54,8 +54,8 @@ if (critCount > 0):
 print (str(status) + ' searcheventage' + ' - ' + statusText + ' ' + extraText)
 
 eventCount={}
-eventCount['UNPROC'] = events.find({"status":"UNPROC"}).count_documents()
-eventCount['READY'] = events.find({"status":"READY"}).count_documents()
+eventCount['UNPROC'] = events.count_documents({"status":"UNPROC"})
+eventCount['READY'] = events.count_documents({"status":"READY"})
 totalEventCount= eventCount['READY'] + eventCount['UNPROC']
 
 for eventstate in ('READY','UNPROC'):
