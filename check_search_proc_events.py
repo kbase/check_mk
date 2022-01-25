@@ -36,8 +36,8 @@ status = 3
 statusText = 'UNKNOWN'
 extraText = 'unknown state'
 
-warnCount = events.find({"status":"PROC","updte": {"$lt": warnAgo}}).count()
-critCount = events.find({"status":"PROC","updte": {"$lt": critAgo}}).count()
+warnCount = events.count_documents({"status":"PROC","updte": {"$lt": warnAgo}})
+critCount = events.count_documents({"status":"PROC","updte": {"$lt": critAgo}})
 if (warnCount == 0):
   status = 0
   statusText = 'OK'
