@@ -50,7 +50,7 @@ if (numCollectors < 1):
 if (numCollectors > 0):
 	collectorState=0
 	collectorStateText='OK'
-print str(collectorState) + ' Condor_num_collectors collectors=' + str(numCollectors) + ' ' + collectorStateText + ' - ' + str(numCollectors) + ' collectors running'
+print (str(collectorState) + ' Condor_num_collectors collectors=' + str(numCollectors) + ' ' + collectorStateText + ' - ' + str(numCollectors) + ' collectors running')
 
 if (numNegotiators < 1):
 	negotiatorState=2
@@ -58,7 +58,7 @@ if (numNegotiators < 1):
 if (numNegotiators > 0):
 	negotiatorState=0
 	negotiatorStateText='OK'
-print str(negotiatorState) + ' Condor_num_negotiators negotiators=' + str(numNegotiators) + ' ' + negotiatorStateText + ' - ' + str(numNegotiators) + ' negotiators running'
+print (str(negotiatorState) + ' Condor_num_negotiators negotiators=' + str(numNegotiators) + ' ' + negotiatorStateText + ' - ' + str(numNegotiators) + ' negotiators running')
 
 slots = collector.query(htcondor.AdTypes.Startd, "true")
 
@@ -91,7 +91,7 @@ for slot in slots:
 	if 'DynamicSlot' in slot.keys():
 		continue
 
-	print str(slotState) + ' Condor_slot_' + slot['Name'] + ' state=' + str(slot['Activity']) + ' ' + slotStateText + ' - slot ' + slot['Name'] + ' in clientgroup ' + slot['CLIENTGROUP'] + ' is in state ' + slot['Activity']
+	print (str(slotState) + ' Condor_slot_' + slot['Name'] + ' state=' + str(slot['Activity']) + ' ' + slotStateText + ' - slot ' + slot['Name'] + ' in clientgroup ' + slot['CLIENTGROUP'] + ' is in state ' + slot['Activity'])
 	# need to check for this key, and create if not exists
 	if slot['CLIENTGROUP'] not in slotCounts:
 		slotCounts[slot['CLIENTGROUP']] = {}
@@ -130,10 +130,10 @@ for clientgroup in conf.sections():
 			clientgroupStateText='CRITICAL'
 
 #		print str(clientgroupState) + ' Condor_clientgroup_' + clientgroup + ' - ' + clientgroupStateText + ' - clientgroup ' + clientgroup + ' has ' + str(slotCounts[clientgroup]['Total']) + ' total workers and ' + str(slotCounts[clientgroup]['Idle']) + ' idle workers'
-		print "%d Condor_clientgroup_%s %s=%d;%d;%d;0 %s - clientgroup %s has %d total workers and %d idle workers" % (clientgroupState,clientgroup,clientgroup,slotCounts[clientgroup]['Idle'],conf.getint(clientgroup,'minIdle.warn'),conf.getint(clientgroup,'minIdle.crit'),clientgroupStateText,clientgroup,slotCounts[clientgroup]['Total'],slotCounts[clientgroup]['Idle'])
+		print ("%d Condor_clientgroup_%s %s=%d;%d;%d;0 %s - clientgroup %s has %d total workers and %d idle workers" % (clientgroupState,clientgroup,clientgroup,slotCounts[clientgroup]['Idle'],conf.getint(clientgroup,'minIdle.warn'),conf.getint(clientgroup,'minIdle.crit'),clientgroupStateText,clientgroup,slotCounts[clientgroup]['Total'],slotCounts[clientgroup]['Idle']))
 
 	except:
-		print str(3) + ' Condor_clientgroup_' + clientgroup + ' - UNKNOWN - clientgroup ' + clientgroup + ' has no workers in any state'
+		print (str(3) + ' Condor_clientgroup_' + clientgroup + ' - UNKNOWN - clientgroup ' + clientgroup + ' has no workers in any state')
 
 schedddaemon = collector.locateAll(htcondor.DaemonTypes.Schedd)[0]
 
@@ -277,13 +277,13 @@ if len(expiredTokenJobsList) > 0:
 	expiredTokenState=1
 	expiredTokenStateText='WARNING'
 	
-print "%d Condor_idleCount idleCount=%d;%d;%d;0 %s - idleCount %d jobs idle" % (idleCountState,idleJobCount,conf.getint('global','idlecount.warn'),conf.getint('global','idlecount.crit'),idleCountStateText,idleJobCount)
-print "%d Condor_runningCount runningCount=%d;%d;%d;0 %s - runningCount %d jobs running" % (runningCountState,runningJobCount,conf.getint('global','runcount.warn'),conf.getint('global','runcount.crit'),runningCountStateText,runningJobCount)
+print ("%d Condor_idleCount idleCount=%d;%d;%d;0 %s - idleCount %d jobs idle" % (idleCountState,idleJobCount,conf.getint('global','idlecount.warn'),conf.getint('global','idlecount.crit'),idleCountStateText,idleJobCount))
+print ("%d Condor_runningCount runningCount=%d;%d;%d;0 %s - runningCount %d jobs running" % (runningCountState,runningJobCount,conf.getint('global','runcount.warn'),conf.getint('global','runcount.crit'),runningCountStateText,runningJobCount))
 
-print "%d Condor_idleTime idleTime=%d;%d;%d;0 %s - idleTime max %d minutes, sample 10 jobIds (minutes): %s" % (idleTimeState,maxIdleTime,conf.getint('global','idletime.warn'),conf.getint('global','idletime.crit'),idleTimeStateText,maxIdleTime,longIdleJobsText)
-print "%d Condor_runningTime runningTime=%d;%d;%d;0 %s - runningTime max %d minutes, sample 10 jobIds (minutes): %s" % (runningTimeState,maxRunningTime,conf.getint('global','runtime.warn'),conf.getint('global','runtime.crit'),runningTimeStateText,maxRunningTime,longRunningJobsText)
+print ("%d Condor_idleTime idleTime=%d;%d;%d;0 %s - idleTime max %d minutes, sample 10 jobIds (minutes): %s" % (idleTimeState,maxIdleTime,conf.getint('global','idletime.warn'),conf.getint('global','idletime.crit'),idleTimeStateText,maxIdleTime,longIdleJobsText))
+print ("%d Condor_runningTime runningTime=%d;%d;%d;0 %s - runningTime max %d minutes, sample 10 jobIds (minutes): %s" % (runningTimeState,maxRunningTime,conf.getint('global','runtime.warn'),conf.getint('global','runtime.crit'),runningTimeStateText,maxRunningTime,longRunningJobsText))
 
-print "%d Condor_expiredTokens - %s - %d jobs with expired tokens: %s" % (expiredTokenState,expiredTokenStateText,len(expiredTokenJobsList),expiredTokenJobsText)
+print ("%d Condor_expiredTokens - %s - %d jobs with expired tokens: %s" % (expiredTokenState,expiredTokenStateText,len(expiredTokenJobsList),expiredTokenJobsText))
 
 
 
