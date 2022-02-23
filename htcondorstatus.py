@@ -227,7 +227,7 @@ for job in jobs:
             longRunningJobList.append( "%d (%s, %s, %s, %d min)"%(job['ClusterId'],acctgroup,jobname,job['RemoteHost'],jobRunningTime))
         if jobRunningTime > conf.getint('global','runtime.crit'):
             runningTimeState=2
-		runningTimeStateText='CRITICAL'
+            runningTimeStateText='CRITICAL'
         runningJobCount += 1
 # 1 is idle; alert on long queue times
     if job['JobStatus'] == 1:
