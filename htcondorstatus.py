@@ -177,24 +177,24 @@ for job in jobs:
     clientgroup='[undefined]'
     token='[undefined]'
     try:
-	jobname=job['JobBatchName']
+        jobname=job['JobBatchName']
     except:
-	jobname=job['GlobalJobId']
+        jobname=job['GlobalJobId']
     try:
-	acctgroup=job['AccountingGroup']
+        acctgroup=job['AccountingGroup']
     except:
-	acctgroup='undefined'
+        acctgroup='undefined'
     try:
-	match=clientgroupre.match(str(job['Requirements']))
-	clientgroup=match.group(1)
+        match=clientgroupre.match(str(job['Requirements']))
+        clientgroup=match.group(1)
     except Exception as e:
 #	print e
-	clientgroup='unknown'
+        clientgroup='unknown'
     try:
-	tokenmatch=tokenre.match(str(job['Environment']))
-	token=tokenmatch.group(1)
+        tokenmatch=tokenre.match(str(job['Environment']))
+        token=tokenmatch.group(1)
     except:
-	token='unknown'
+        token='unknown'
 
 # these loops could be made better by storing the data in a structure instead of
 # variables with "running" or "idle" in the name
