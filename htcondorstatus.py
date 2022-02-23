@@ -217,34 +217,34 @@ for job in jobs:
 #	if r.status_code != 200:
 #		expiredTokenJobsList.append(str(job['ClusterId']) + ' (running) ' + job['RemoteHost'] + ' ' + jobname + ' ' +acctgroup)
 
-	jobRunningTime = (job['ServerTime'] - job['JobCurrentStartDate'])/60
-	if jobRunningTime > maxRunningTime:
-		maxRunningTime=jobRunningTime
-	if jobRunningTime > conf.getint('global','runtime.warn'):
-                if runningTimeState != 2:
-                       runningTimeState=1
-                       runningTimeStateText='WARNING'
-                longRunningJobList.append( "%d (%s, %s, %s, %d min)"%(job['ClusterId'],acctgroup,jobname,job['RemoteHost'],jobRunningTime))
-	if jobRunningTime > conf.getint('global','runtime.crit'):
-		runningTimeState=2
+        jobRunningTime = (job['ServerTime'] - job['JobCurrentStartDate'])/60
+        if jobRunningTime > maxRunningTime:
+            maxRunningTime=jobRunningTime
+        if jobRunningTime > conf.getint('global','runtime.warn'):
+            if runningTimeState != 2:
+               runningTimeState=1
+               runningTimeStateText='WARNING'
+            longRunningJobList.append( "%d (%s, %s, %s, %d min)"%(job['ClusterId'],acctgroup,jobname,job['RemoteHost'],jobRunningTime))
+        if jobRunningTime > conf.getint('global','runtime.crit'):
+            runningTimeState=2
 		runningTimeStateText='CRITICAL'
-	runningJobCount += 1
+        runningJobCount += 1
 # 1 is idle; alert on long queue times
     if job['JobStatus'] == 1:
 
-	idleJobCount += 1
+        idleJobCount += 1
 
-	jobIdleTime = (job['ServerTime'] - job['QDate'])/60
-	if jobIdleTime > maxIdleTime:
-		maxIdleTime=jobIdleTime
-	if jobIdleTime > conf.getint('global','idletime.warn'):
-               if idleTimeState != 2:
-                       idleTimeState=1
-                       idleTimeStateText='WARNING'
-	longIdleJobList.append( "%d (%s, %s, %s, %dmin)"%(job['ClusterId'],acctgroup,clientgroup,jobname,jobIdleTime))
-	if jobIdleTime > conf.getint('global','idletime.crit'):
-		idleTimeState=2
-		idleTimeStateText='CRITICAL'
+        jobIdleTime = (job['ServerTime'] - job['QDate'])/60
+        if jobIdleTime > maxIdleTime:
+            maxIdleTime=jobIdleTime
+        if jobIdleTime > conf.getint('global','idletime.warn'):
+           if idleTimeState != 2:
+               idleTimeState=1
+               idleTimeStateText='WARNING'
+        longIdleJobList.append( "%d (%s, %s, %s, %dmin)"%(job['ClusterId'],acctgroup,clientgroup,jobname,jobIdleTime))
+        if jobIdleTime > conf.getint('global','idletime.crit'):
+            idleTimeState=2
+            idleTimeStateText='CRITICAL'
 
 # report idle jobs with expired tokens
 # moving to here to make it easier to bypass if needed
@@ -261,22 +261,22 @@ longIdleJobsText = ', '.join(longIdleJobList[0:10])
 expiredTokenJobsText = ', '.join(expiredTokenJobsList)
 
 if runningJobCount > conf.getint('global','runcount.warn'):
-	runningCountState=1
-	runningCountStateText='WARNING'
+    runningCountState=1
+    runningCountStateText='WARNING'
 if runningJobCount > conf.getint('global','runcount.crit'):
-	runningCountState=2
-	runningCountStateText='CRITICAL'
+    runningCountState=2
+    runningCountStateText='CRITICAL'
 if idleJobCount > conf.getint('global','idlecount.warn'):
-	idleCountState=1
-	idleCountStateText='WARNING'
+    idleCountState=1
+    idleCountStateText='WARNING'
 if idleJobCount > conf.getint('global','idlecount.crit'):
-	idleCountState=2
-	idleCountStateText='CRITICAL'
+    idleCountState=2
+    idleCountStateText='CRITICAL'
 
 if len(expiredTokenJobsList) > 0:
-	expiredTokenState=1
-	expiredTokenStateText='WARNING'
-	
+    expiredTokenState=1
+    expiredTokenStateText='WARNING'
+
 print ("%d Condor_idleCount idleCount=%d;%d;%d;0 %s - idleCount %d jobs idle" % (idleCountState,idleJobCount,conf.getint('global','idlecount.warn'),conf.getint('global','idlecount.crit'),idleCountStateText,idleJobCount))
 print ("%d Condor_runningCount runningCount=%d;%d;%d;0 %s - runningCount %d jobs running" % (runningCountState,runningJobCount,conf.getint('global','runcount.warn'),conf.getint('global','runcount.crit'),runningCountStateText,runningJobCount))
 
