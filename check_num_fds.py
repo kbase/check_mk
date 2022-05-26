@@ -54,7 +54,10 @@ bad_pids = dict()
 status = 0
 
 for pid in (psutil.pids()):
-  num_fds=check_pid(pid)
+  try:
+    num_fds=check_pid(pid)
+  except (psutil.NoSuchProcess):
+    continue
   if num_fds > options.crit_value:
     bad_pids[pid] = {'pid':pid,'num_fds':num_fds}
     status = 2
