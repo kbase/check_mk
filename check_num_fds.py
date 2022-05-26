@@ -56,6 +56,7 @@ status = 0
 for pid in (psutil.pids()):
   try:
     num_fds=check_pid(pid)
+# don't need to worry about a PID that's gone, just ignore it
   except (psutil.NoSuchProcess):
     continue
   if num_fds > options.crit_value:
