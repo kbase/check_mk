@@ -45,7 +45,8 @@ def check_pid(pid):
     num_fds = psutil.Process( pid ).num_fds()
 # don't need to worry about a PID that's gone, just ignore it
   except (psutil.NoSuchProcess):
-    print('pid ' + str(pid) + ' not found', file=sys.stderr)
+# debugging: print pids not found to make sure script doesn't fail
+#    print('pid ' + str(pid) + ' not found', file=sys.stderr)
     pass
 
   return num_fds
@@ -64,7 +65,7 @@ for pid in (psutil.pids()):
     num_fds=check_pid(pid)
 # don't need to worry about a PID that's gone, just ignore it
   except (psutil.NoSuchProcess):
-    continue
+    pass
   if num_fds > options.crit_value:
     bad_pids[pid] = {'pid':pid,'num_fds':num_fds}
     status = 2
