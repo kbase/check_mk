@@ -40,6 +40,7 @@ import pprint
 
 def check_pid(pid):
 # Getting the number of files opened by pid
+  num_fds = 0
   try:
     num_fds = psutil.Process( pid ).num_fds()
 # don't need to worry about a PID that's gone, just ignore it
