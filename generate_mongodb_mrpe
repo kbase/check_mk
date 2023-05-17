@@ -22,7 +22,7 @@ NAGIOS_OPTIONS="-u $mongouser -p $mongopass -H $MONGO_ADDRESS -D"
 
 # memory_mapped needs to be able to specify params
 # bash4 dictionary (aka associative array) not the most portable!
-declare -A nagios_args=( ["memory_mapped"]="-W 1500 -C 2000" ["memory"]="-W 1500 -C 2000" ["replica_primary"]="-r kbrs0" ["connect"]="-W 10 -C 20" ["connect_primary"]="-W 10 -C 20" ["page_faults"]="-W 8000 -C 10000" ["oplog"="-W 192 -C 24")
+declare -A nagios_args=( ["memory_mapped"]="-W 1500 -C 2000" ["memory"]="-W 1500 -C 2000" ["replica_primary"]="-r kbrs0" ["connect"]="-W 10 -C 20" ["connect_primary"]="-W 10 -C 20" ["page_faults"]="-W 8000 -C 10000" ["oplog"]="-W 192 -C 24")
 
 # replication_lag_percent is slow, let's leave it out
 # add oplog if you have a working check_mongodb.py
