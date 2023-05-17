@@ -1,5 +1,9 @@
 #!/bin/bash
 
+### This script is deprecated.
+### Use generate_mongodb_mrpe to generate an MRPE config file
+### Use check_mongo_replication_time_diff for the oplog age
+
 # for creds
 MONGO_AUTH_FILE=/root/.mongorc.js
 NAGIOS_PLUGIN_SCRIPT=/root/nagios-plugin-mongodb/check_mongodb.py
