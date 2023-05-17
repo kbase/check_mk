@@ -11,8 +11,8 @@ urllib3.disable_warnings()
 sw_url = sys.argv[1]
 services = sys.argv[2:]
 
-#print sw_url
-#print services
+#print (sw_url)
+#print (services)
 
 
 for dynsvc in services:
@@ -26,12 +26,12 @@ for dynsvc in services:
         }]
     }
 
-    swreq=requests.post(sw_url, json=swdata)
+    swreq=requests.post(sw_url, json=swdata, verify=False)
 
     try:
         dynsvcurl = swreq.json()['result'][0]['url']
     except:
-        print '2 dynserv_' + dynsvc + ' - CRITICAL - service wizard reports service ' + dynsvc + ' does not exist'
+        print ('2 dynserv_' + dynsvc + ' - CRITICAL - service wizard reports service ' + dynsvc + ' does not exist')
         continue
 
     dynsvcdata = {
@@ -41,11 +41,11 @@ for dynsvc in services:
          "params": []
     }
     
-    dynsvcreq = requests.post(dynsvcurl,json=dynsvcdata)
+    dynsvcreq = requests.post(dynsvcurl,json=dynsvcdata, verify=False)
     try:
         dynsvcstate = dynsvcreq.json()['result'][0]['state']
     except:
-        print '2 dynserv_' + dynsvc + ' - CRITICAL - service ' + dynsvc + ' not responding correctly'
+        print ('2 dynserv_' + dynsvc + ' - CRITICAL - service ' + dynsvc + ' not responding correctly')
         continue
     dynsvcver = dynsvcreq.json()['result'][0]['version']
     
@@ -58,4 +58,4 @@ for dynsvc in services:
         svcstate=2
         svcstatetext='CRITICAL'
 
-    print str(svcstate) + ' dynserv_' + dynsvc + ' - ' + svcstatetext + ' - service ' + dynsvc + ' version ' + dynsvcver + ' reports state ' + dynsvcstate
+    print (str(svcstate) + ' dynserv_' + dynsvc + ' - ' + svcstatetext + ' - service ' + dynsvc + ' version ' + dynsvcver + ' reports state ' + dynsvcstate)

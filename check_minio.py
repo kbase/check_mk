@@ -57,3 +57,5 @@ for server in (minioInfo['info']['servers']):
             driveStateString += ' ' + driveEndpoint + ' : ' + drive['state'] + ' ' + driveExtraInfo
 
 print ("%d Minio_status - %s - %s %s %s" % (status, status_strings[status], clusterModeString, serverStateString, driveStateString) )
+
+exit (status)

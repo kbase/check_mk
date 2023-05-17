@@ -40,7 +40,14 @@ import pprint
 
 def check_pid(pid):
 # Getting the number of files opened by pid
-  num_fds = psutil.Process( pid ).num_fds()
+  num_fds = 0
+  try:
+    num_fds = psutil.Process( pid ).num_fds()
+# don't need to worry about a PID that's gone, just ignore it
+  except (psutil.NoSuchProcess):
+# debugging: print pids not found to make sure script doesn't fail
+#    print('pid ' + str(pid) + ' not found', file=sys.stderr)
+    pass
 
   return num_fds
 
@@ -54,7 +61,11 @@ bad_pids = dict()
 status = 0
 
 for pid in (psutil.pids()):
-  num_fds=check_pid(pid)
+  try:
+    num_fds=check_pid(pid)
+# don't need to worry about a PID that's gone, just ignore it
+  except (psutil.NoSuchProcess):
+    pass
   if num_fds > options.crit_value:
     bad_pids[pid] = {'pid':pid,'num_fds':num_fds}
     status = 2

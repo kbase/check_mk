@@ -36,8 +36,8 @@ status = 3
 statusText = 'UNKNOWN'
 extraText = 'unknown state'
 
-warnCount = events.find({"status":"PROC","updte": {"$lt": warnAgo}}).count()
-critCount = events.find({"status":"PROC","updte": {"$lt": critAgo}}).count()
+warnCount = events.count_documents({"status":"PROC","updte": {"$lt": warnAgo}})
+critCount = events.count_documents({"status":"PROC","updte": {"$lt": critAgo}})
 if (warnCount == 0):
   status = 0
   statusText = 'OK'
@@ -51,11 +51,11 @@ if (critCount > 0):
   statusText = 'CRITICAL'
   extraText = str(critCount) + ' PROC events found older than ' + str(critInterval) + ' seconds'
 
-print str(status) + ' searcheventage' + ' - ' + statusText + ' ' + extraText
+print (str(status) + ' searcheventage' + ' - ' + statusText + ' ' + extraText)
 
 eventCount={}
-eventCount['UNPROC'] = events.find({"status":"UNPROC"}).count()
-eventCount['READY'] = events.find({"status":"READY"}).count()
+eventCount['UNPROC'] = events.count_documents({"status":"UNPROC"})
+eventCount['READY'] = events.count_documents({"status":"READY"})
 totalEventCount= eventCount['READY'] + eventCount['UNPROC']
 
 for eventstate in ('READY','UNPROC'):
@@ -71,7 +71,7 @@ for eventstate in ('READY','UNPROC'):
 	if (eventCount[eventstate] > countsStatus[eventstate]['crit']):
 		countStatus=2
 		countStatusText='CRITICAL'
-	print str(countStatus) + ' searcheventcount_' + eventstate + ' eventcount=' + str(eventCount[eventstate]) + '|totaleventcount=' + str(totalEventCount) + ' ' + countStatusText + ' ' + extraText
+	print (str(countStatus) + ' searcheventcount_' + eventstate + ' eventcount=' + str(eventCount[eventstate]) + '|totaleventcount=' + str(totalEventCount) + ' ' + countStatusText + ' ' + extraText)
 
 #updte: {$lt: ISODate("2018-02-27T19:46:00.000Z")
 

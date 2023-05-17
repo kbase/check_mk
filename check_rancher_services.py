@@ -13,6 +13,8 @@ import configparser
 import json
 import subprocess
 import time
+# this requires python 3.4
+import pathlib
 from pprint import pprint
 
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
@@ -139,12 +141,30 @@ def process_section(conf, section):
 		stackState = 3
 		stackStateTxt = 'UNKNOWN'
 
+		if (conf.has_option(section,'stack_health_dir')):
+		    stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth'
+		    stackPath = pathlib.Path(stackHealthFile)
+		    # make sure the file exists, in case stack has never been healthy
+		    # (should also error immediately if a bad path is provided in the config file)
+		    if (not stackPath.exists()):
+		        stackPath.touch()
+			
 		if stackData[myStack]['healthState'] == 'healthy':
 			stackState = 0
 			stackStateTxt = 'OK'
-		if stackData[myStack]['healthState'] == 'degraded':
+			if (conf.has_option(section,'stack_health_dir')):
+			    stackPath.touch()
+#		if stackData[myStack]['healthState'] == 'degraded':
+		# this may be too broad, but let's see if it's a problem
+		else:
 			stackState = 1
 			stackStateTxt = 'WARNING'
+			if (conf.has_option(section,'stack_health_dir') and conf.has_option(section,'stack_health_age') and stackPath.exists()):
+			    # check age, if too old, make state critical
+			    # if missing, don't do anything?
+			    if (time.time() - stackPath.stat().st_mtime > float(conf[section]['stack_health_age'])):
+			        stackState = 2
+			        stackStateTxt = 'CRITICAL (state ' + str(int(time.time() - stackPath.stat().st_mtime)) + 'sec old)'
 
 		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'])
 
