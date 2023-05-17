@@ -8,7 +8,7 @@
 MONGO_AUTH_FILE=/root/.mongorc.js
 # use github repo version
 NAGIOS_PLUGIN_SCRIPT=/root/nagios-plugin-mongodb/check_mongodb.py
-# need the hostname/address that appears in rs.status()
+# can use the host from rs.status() here but is not required
 MONGO_ADDRESS=localhost
 
 mongouser=$(grep db.auth $MONGO_AUTH_FILE |cut -f2 -d "'")
