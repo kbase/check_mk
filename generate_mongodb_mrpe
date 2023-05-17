@@ -2,18 +2,18 @@
 
 ## This shell script generates lines suitable to be added to mrpe.cfg
 ## Because there may be existing checks in mrpe.cfg, this script doesn't overwrite mrpe.cfg
-## Modify MONGO_ADDRESS with the target hostname (must match rs.status()
+## Set the MONGO_ADDRESS variable with the target hostname (must match rs.status()
 ## for replication checks to work), run the script, then add the content to mrpe.cfg
 ## Also chmod 600 /etc/check_mk/mrpe.cfg to keep the password hidden from nonroot users
 ## For single node instances, don't use the applicable lines in mrpe.cfg
+##
+## You can use the 'oplog' check if you use a locally modified check_mongodb.py
 
 # for creds; default location for root user
 MONGO_AUTH_FILE=/root/.mongorc.js
 # this comes from https://github.com/mzupan/nagios-plugin-mongodb
 NAGIOS_PLUGIN_SCRIPT=/root/nagios-plugin-mongodb/check_mongodb.py
 #NAGIOS_PLUGIN_SCRIPT=/usr/local/lib64/nagios/plugins/check_mongodb.py
-# need the hostname/address that appears in rs.status() for replica sets
-MONGO_ADDRESS=localhost
 
 mongouser=$(grep db.auth $MONGO_AUTH_FILE |cut -f2 -d "'")
 mongopass=$(grep db.auth $MONGO_AUTH_FILE |cut -f4 -d "'")
@@ -22,9 +22,10 @@ NAGIOS_OPTIONS="-u $mongouser -p $mongopass -H $MONGO_ADDRESS -D"
 
 # memory_mapped needs to be able to specify params
 # bash4 dictionary (aka associative array) not the most portable!
-declare -A nagios_args=( ["memory_mapped"]="-W 1500 -C 2000" ["memory"]="-W 1500 -C 2000" ["replica_primary"]="-r kbrs0" ["connect"]="-W 10 -C 20" ["connect_primary"]="-W 10 -C 20" ["page_faults"]="-W 8000 -C 10000")
+declare -A nagios_args=( ["memory_mapped"]="-W 1500 -C 2000" ["memory"]="-W 1500 -C 2000" ["replica_primary"]="-r kbrs0" ["connect"]="-W 10 -C 20" ["connect_primary"]="-W 10 -C 20" ["page_faults"]="-W 8000 -C 10000" ["oplog"]="-W 192 -C 24")
 
 # replication_lag_percent is slow, let's leave it out
+# add oplog if you have a working check_mongodb.py
 for check in connect connections replication_lag memory memory_mapped flushing last_flush_time replset_state replica_primary connect_primary page_faults
 do
     command="$NAGIOS_PLUGIN_SCRIPT $NAGIOS_OPTIONS -A $check ${nagios_args["$check"]}"
