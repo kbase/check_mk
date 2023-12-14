@@ -34,8 +34,7 @@ def main():
     # Determine if the situation is critical
     if unhealthy_workers:
         print("\nCRITICAL: There are unhealthy workers!")
-        # Insert your Checkmk alerting mechanism here
-        # Example: alert_checkmk_critical(unhealthy_workers)
+
     else:
         print("\nOK: All htcondor workers are healthy.")
 
