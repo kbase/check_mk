@@ -173,7 +173,7 @@ def process_section(conf, section):
 			for serviceId in stackData[myStack]['serviceIds']:
 				healthServiceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 				healthSvc=healthServiceReq.json()
-				print (healthSvc['id'] + ' ' + healthSvc['healthState'])
+#				print (healthSvc['id'] + ' ' + healthSvc['healthState'])
 				if (healthSvc['healthState'] == 'healthy' or healthSvc['healthState'] == 'started-once'):
 					conn.execute('DELETE FROM badServices WHERE serviceId = ?', [ healthSvc['id'] ] )
 					conn.commit()
