@@ -87,11 +87,19 @@ for slot in slots:
 	if slot['Activity'] in ['Killing']:
 		slotState=2
 		slotStateText='CRITICAL'
+	# Check node health status
+	is_healthy = slot.get('NODE_IS_HEALTHY', False)
+	node_is_healthy_message = f"NODE_IS_HEALTHY={is_healthy}"
+	if not is_healthy:
+		slotState = 2
+		slotStateText = 'CRITICAL'
+
 	# don't report dynamic slots
 	if 'DynamicSlot' in slot.keys():
 		continue
 
-	print (str(slotState) + ' Condor_slot_' + slot['Name'] + ' state=' + str(slot['Activity']) + ' ' + slotStateText + ' - slot ' + slot['Name'] + ' in clientgroup ' + slot['CLIENTGROUP'] + ' is in state ' + slot['Activity'])
+	print(str(slotState) + ' Condor_slot_' + slot['Name'] + ' state=' + str(slot['Activity']) + ' ' + slotStateText + ' - slot ' + slot['Name'] + ' in clientgroup ' + slot['CLIENTGROUP'] + ' is in state ' + slot['Activity'] + ' ' + node_is_healthy_message)
+
 	# need to check for this key, and create if not exists
 	if slot['CLIENTGROUP'] not in slotCounts:
 		slotCounts[slot['CLIENTGROUP']] = {}
