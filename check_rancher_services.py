@@ -199,7 +199,7 @@ def process_section(conf, section):
 						stackStateTxt = 'CRITICAL (state ' + str(int(time.time() - stackPath.stat().st_mtime)) + 'sec old)'
 
 		conn.close()
-		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'] + ' ' + stackExtraTxt)
+		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'] + ' ; ' + stackExtraTxt)
 
 # if on a host running containers, check their resources
 # assume only one instance per service
