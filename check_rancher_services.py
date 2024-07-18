@@ -174,15 +174,24 @@ def process_section(conf, section):
 				serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 				svc=serviceReq.json()
 				print (svc['healthState'])
+				conn.execute('DELETE FROM badServices WHERE serviceId = ?',svc['id'])
+				conn.commit()
 
-			stackState = 1
-			stackStateTxt = 'WARNING'
-			if (conf.has_option(section,'stack_health_dir') and conf.has_option(section,'stack_health_age') and stackPath.exists()):
-			    # check age, if too old, make state critical
-			    # if missing, don't do anything?
-			    if (time.time() - stackPath.stat().st_mtime > float(conf[section]['stack_health_age'])):
-			        stackState = 2
-			        stackStateTxt = 'CRITICAL (state ' + str(int(time.time() - stackPath.stat().st_mtime)) + 'sec old)'
+			cursor = conn.cursor()
+			cursor.execute('SELECT * FROM badServices')
+			if (len(cursor.fetchall()) == 0):
+				# all services now OK, so assume stack OK
+				stackState = 0
+				stackStateTxt = 'OK'
+			else:
+				stackState = 1
+				stackStateTxt = 'WARNING'
+				if (conf.has_option(section,'stack_health_dir') and conf.has_option(section,'stack_health_age') and stackPath.exists()):
+				    # check age, if too old, make state critical
+			    		# if missing, don't do anything?
+			    	if (time.time() - stackPath.stat().st_mtime > float(conf[section]['stack_health_age'])):
+			        	stackState = 2
+			        	stackStateTxt = 'CRITICAL (state ' + str(int(time.time() - stackPath.stat().st_mtime)) + 'sec old)'
 
 		conn.close()
 		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'])
