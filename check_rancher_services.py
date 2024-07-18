@@ -189,7 +189,7 @@ def process_section(conf, section):
 			else:
 				stackState = 1
 				stackStateTxt = 'WARNING'
-				stackExtraTxt = 'bad services: ' + ' '.join(badServices)
+				stackExtraTxt = 'bad services: ' + ' '.join([ t[0] for t in badServices])
 
 				if (conf.has_option(section,'stack_health_dir') and conf.has_option(section,'stack_health_age') and stackPath.exists()):
 			# check age, if too old, make state critical
@@ -199,7 +199,7 @@ def process_section(conf, section):
 						stackStateTxt = 'CRITICAL (state ' + str(int(time.time() - stackPath.stat().st_mtime)) + 'sec old)'
 
 		conn.close()
-		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'] + stackExtraTxt)
+		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'] + ' ' + stackExtraTxt)
 
 # if on a host running containers, check their resources
 # assume only one instance per service
