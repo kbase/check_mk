@@ -196,6 +196,13 @@ def process_section(conf, section):
 				stackState = 1
 				stackStateTxt = 'WARNING'
 				stackExtraTxt = ' ; bad services: ' + ' '.join([ t[0] for t in badServices])
+				query = "SELECT serviceName FROM badServices WHERE (datetime(lastUpdate) < datetime('now','-" + (2 * int(conf[section]['stack_health_age'])) + " seconds' ))"
+#			print (query)
+				cursor.execute(query)
+				reallyBadServices = cursor.fetchall()
+				if (len(reallyBadServices) == 0):
+					stackState = 2
+					stackStateTxt = 'CRITICAL'
 
 # ideally, have something here to set state CRITICAL if age is even older (maybe 2x what's in the ini file?)
 
