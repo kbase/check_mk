@@ -145,11 +145,11 @@ def process_section(conf, section):
 		if (conf.has_option(section,'stack_health_dir')):
 			stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth.db'
 			stackPath = pathlib.Path(stackHealthFile)
-			# make sure the file exists, in case stack has never been healthy
+			# make sure the db file exists, in case stack has never been checked
 			# (should also error immediately if a bad path is provided in the config file)
 			if (not stackPath.exists()):
 				conn = sqlite3.connect(stackHealthFile)
-				conn.execute('CREATE TABLE badServices (serviceName TEXT, lastUpdate DATETIME DEFAULT CURRENT_TIMESTAMP)')
+				conn.execute('CREATE TABLE badServices (serviceId TEXT, serviceName TEXT, lastUpdate DATETIME DEFAULT CURRENT_TIMESTAMP)')
 				conn.close()
 
 		conn = sqlite3.connect(stackHealthFile)
@@ -161,8 +161,7 @@ def process_section(conf, section):
 # just assume all services are healthy if stack is, and delete them from the db
 				conn.execute('DELETE FROM badServices')
 				conn.commit()
-			
-		# this may be too broad, but let's see if it's a problem
+
 # plan: look through services in stack
 # if service healthy, delete from table
 # if service unhealthy, look for it in table
@@ -170,6 +169,12 @@ def process_section(conf, section):
 # if in table, leave it
 # after all services in stack are done, look through table, if any service timestamp is too old, throw alert
 		else:
+			# we're trolling this again, meh
+			for service in stackData[myStack]['serviceIds']:
+				serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
+				svc=serviceReq.json()
+				print svc['healthState']
+
 			stackState = 1
 			stackStateTxt = 'WARNING'
 			if (conf.has_option(section,'stack_health_dir') and conf.has_option(section,'stack_health_age') and stackPath.exists()):
