@@ -143,10 +143,10 @@ def process_section(conf, section):
 		stackStateTxt = 'UNKNOWN'
 
 		if (conf.has_option(section,'stack_health_dir')):
-		    stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth'
-		    stackPath = pathlib.Path(stackHealthFile)
-		    # make sure the file exists, in case stack has never been healthy
-		    # (should also error immediately if a bad path is provided in the config file)
+			stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth'
+			stackPath = pathlib.Path(stackHealthFile)
+			# make sure the file exists, in case stack has never been healthy
+			# (should also error immediately if a bad path is provided in the config file)
 			if (not stackPath.exists()):
 				conn = sqlite3.connect(stackPath)
 				cursor = conn.cursor()
