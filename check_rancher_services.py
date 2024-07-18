@@ -160,15 +160,13 @@ def process_section(conf, section):
 			stackState = 0
 			stackStateTxt = 'OK'
 			if (conf.has_option(section,'stack_health_dir')):
-# just assume all services are healthy if stack is, and delete them from the db
+# just assume all services are healthy if stack is, and delete all bad services from the db
 				conn.execute('DELETE FROM badServices')
 				conn.commit()
 
 # plan: look through services in stack
 # if service healthy, delete from table
-# if service unhealthy, look for it in table
-# if not in table, insert it
-# if in table, leave it
+# if service unhealthy, insert or ignore (ignore preserves original timestamp)
 # after all services in stack are done, look through table, if any service timestamp is too old, throw alert
 		else:
 			# we're trolling this again, meh
@@ -198,6 +196,8 @@ def process_section(conf, section):
 				stackState = 1
 				stackStateTxt = 'WARNING'
 				stackExtraTxt = 'bad services: ' + ' '.join([ t[0] for t in badServices])
+
+# ideally, have something here to set state CRITICAL if age is even older (maybe 2x what's in the ini file?)
 
 #				if (conf.has_option(section,'stack_health_dir') and conf.has_option(section,'stack_health_age') and stackPath.exists()):
 			# check age, if too old, make state critical
