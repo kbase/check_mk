@@ -151,12 +151,16 @@ def process_section(conf, section):
 				conn = sqlite3.connect(stackHealthFile)
 				cursor = conn.cursor()
 				cursor.execute('CREATE TABLE badServices (serviceName text)')
-			
+
+		conn = sqlite3.connect(stackHealthFile)
+		cursor = conn.cursor()
+
 		if stackData[myStack]['healthState'] == 'healthy':
 			stackState = 0
 			stackStateTxt = 'OK'
 			if (conf.has_option(section,'stack_health_dir')):
-			    stackPath.touch()
+				cursor.execute('DELETE FROM badServices')
+			
 #		if stackData[myStack]['healthState'] == 'degraded':
 		# this may be too broad, but let's see if it's a problem
 		else:
