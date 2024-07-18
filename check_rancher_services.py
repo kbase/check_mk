@@ -171,10 +171,10 @@ def process_section(conf, section):
 		else:
 			# we're trolling this again, meh
 			for service in stackData[myStack]['serviceIds']:
-				serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
-				svc=serviceReq.json()
-				print (svc['healthState'])
-				conn.execute('DELETE FROM badServices WHERE serviceId = ?',svc['id'])
+				healthServiceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
+				healthSvc=healthServiceReq.json()
+				print (healthSvc['id'] + ' ' + healthSvc['healthState'])
+				conn.execute('DELETE FROM badServices WHERE serviceId = ?', [ healthSvc['id'] ] )
 				conn.commit()
 
 			cursor = conn.cursor()
