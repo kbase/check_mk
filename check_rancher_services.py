@@ -151,6 +151,7 @@ def process_section(conf, section):
 			if (not stackPath.exists()):
 				conn = sqlite3.connect(stackHealthFile)
 				conn.execute('CREATE TABLE badServices (serviceId TEXT PRIMARY KEY, serviceName TEXT, lastUpdate DATETIME DEFAULT CURRENT_TIMESTAMP)')
+				conn.commit()
 				conn.close()
 
 		conn = sqlite3.connect(stackHealthFile)
