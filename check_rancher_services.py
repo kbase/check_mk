@@ -149,17 +149,17 @@ def process_section(conf, section):
 			# (should also error immediately if a bad path is provided in the config file)
 			if (not stackPath.exists()):
 				conn = sqlite3.connect(stackHealthFile)
-				cursor = conn.cursor()
-				cursor.execute('CREATE TABLE badServices (serviceName text)')
+				conn.execute('CREATE TABLE badServices (serviceName text)')
+				conn.close()
 
 		conn = sqlite3.connect(stackHealthFile)
-		cursor = conn.cursor()
 
 		if stackData[myStack]['healthState'] == 'healthy':
 			stackState = 0
 			stackStateTxt = 'OK'
 			if (conf.has_option(section,'stack_health_dir')):
-				cursor.execute('DELETE FROM badServices')
+				conn.execute('DELETE FROM badServices')
+				conn.commit()
 			
 #		if stackData[myStack]['healthState'] == 'degraded':
 		# this may be too broad, but let's see if it's a problem
@@ -173,6 +173,7 @@ def process_section(conf, section):
 			        stackState = 2
 			        stackStateTxt = 'CRITICAL (state ' + str(int(time.time() - stackPath.stat().st_mtime)) + 'sec old)'
 
+		conn.close()
 		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'])
 
 # if on a host running containers, check their resources
