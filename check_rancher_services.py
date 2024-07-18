@@ -150,7 +150,7 @@ def process_section(conf, section):
 			# (should also error immediately if a bad path is provided in the config file)
 			if (not stackPath.exists()):
 				conn = sqlite3.connect(stackHealthFile)
-				conn.execute('CREATE TABLE badServices (serviceId TEXT, serviceName TEXT, lastUpdate DATETIME DEFAULT CURRENT_TIMESTAMP) PRIMARY KEY (serviceId)')
+				conn.execute('CREATE TABLE badServices (serviceId TEXT PRIMARY KEY, serviceName TEXT, lastUpdate DATETIME DEFAULT CURRENT_TIMESTAMP)')
 				conn.close()
 
 		conn = sqlite3.connect(stackHealthFile)
