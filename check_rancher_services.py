@@ -141,6 +141,7 @@ def process_section(conf, section):
 	if (conf.has_option(section,'test_stack_health') and conf.getboolean(section,'test_stack_health') is True):
 		stackState = 3
 		stackStateTxt = 'UNKNOWN'
+		stackExtraTxt = ''
 
 		if (conf.has_option(section,'stack_health_dir')):
 			stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth.db'
@@ -179,14 +180,17 @@ def process_section(conf, section):
 					conn.commit()
 
 			cursor = conn.cursor()
-			cursor.execute('SELECT * FROM badServices')
-			if (len(cursor.fetchall()) == 0):
+			cursor.execute('SELECT serviceName FROM badServices')
+			badServices = cursor.fetchall()
+			if (len(badServices) == 0):
 				# all services now OK, so assume stack OK
 				stackState = 0
 				stackStateTxt = 'OK'
 			else:
 				stackState = 1
 				stackStateTxt = 'WARNING'
+				stackExtraTxt = 'bad services: ' + ' '.join(badServices)
+
 				if (conf.has_option(section,'stack_health_dir') and conf.has_option(section,'stack_health_age') and stackPath.exists()):
 			# check age, if too old, make state critical
 			# if missing, don't do anything?
@@ -195,7 +199,7 @@ def process_section(conf, section):
 						stackStateTxt = 'CRITICAL (state ' + str(int(time.time() - stackPath.stat().st_mtime)) + 'sec old)'
 
 		conn.close()
-		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'])
+		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'] + stackExtraTxt)
 
 # if on a host running containers, check their resources
 # assume only one instance per service
