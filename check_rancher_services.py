@@ -149,7 +149,7 @@ def process_section(conf, section):
 			# (should also error immediately if a bad path is provided in the config file)
 			if (not stackPath.exists()):
 				conn = sqlite3.connect(stackHealthFile)
-				conn.execute('CREATE TABLE badServices (serviceName text)')
+				conn.execute('CREATE TABLE badServices (serviceName TEXT, lastUpdate DATETIME DEFAULT CURRENT_TIMESTAMP)')
 				conn.close()
 
 		conn = sqlite3.connect(stackHealthFile)
@@ -158,11 +158,17 @@ def process_section(conf, section):
 			stackState = 0
 			stackStateTxt = 'OK'
 			if (conf.has_option(section,'stack_health_dir')):
+# just assume all services are healthy if stack is, and delete them from the db
 				conn.execute('DELETE FROM badServices')
 				conn.commit()
 			
-#		if stackData[myStack]['healthState'] == 'degraded':
 		# this may be too broad, but let's see if it's a problem
+# plan: look through services in stack
+# if service healthy, delete from table
+# if service unhealthy, look for it in table
+# if not in table, insert it
+# if in table, leave it
+# after all services in stack are done, look through table, if any service timestamp is too old, throw alert
 		else:
 			stackState = 1
 			stackStateTxt = 'WARNING'
