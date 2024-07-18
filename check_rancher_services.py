@@ -170,7 +170,7 @@ def process_section(conf, section):
 # after all services in stack are done, look through table, if any service timestamp is too old, throw alert
 		else:
 			# we're trolling this again, meh
-			for service in stackData[myStack]['serviceIds']:
+			for serviceId in stackData[myStack]['serviceIds']:
 				healthServiceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 				healthSvc=healthServiceReq.json()
 				print (healthSvc['id'] + ' ' + healthSvc['healthState'])
