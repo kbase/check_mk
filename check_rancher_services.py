@@ -143,7 +143,7 @@ def process_section(conf, section):
 		stackStateTxt = 'UNKNOWN'
 
 		if (conf.has_option(section,'stack_health_dir')):
-			stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth'
+			stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth.db'
 			stackPath = pathlib.Path(stackHealthFile)
 			# make sure the file exists, in case stack has never been healthy
 			# (should also error immediately if a bad path is provided in the config file)
