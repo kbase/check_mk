@@ -147,10 +147,10 @@ def process_section(conf, section):
 		    stackPath = pathlib.Path(stackHealthFile)
 		    # make sure the file exists, in case stack has never been healthy
 		    # (should also error immediately if a bad path is provided in the config file)
-		    if (not stackPath.exists()):
-			conn = sqlite3.connect(stackPath)
-			cursor = conn.cursor()
-			cursor.execute('CREATE TABLE badServices (serviceName text)')
+			if (not stackPath.exists()):
+				conn = sqlite3.connect(stackPath)
+				cursor = conn.cursor()
+				cursor.execute('CREATE TABLE badServices (serviceName text)')
 			
 		if stackData[myStack]['healthState'] == 'healthy':
 			stackState = 0
