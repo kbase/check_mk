@@ -173,7 +173,7 @@ def process_section(conf, section):
 			for service in stackData[myStack]['serviceIds']:
 				serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 				svc=serviceReq.json()
-				print svc['healthState']
+				print (svc['healthState'])
 
 			stackState = 1
 			stackStateTxt = 'WARNING'
