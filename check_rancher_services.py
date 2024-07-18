@@ -13,6 +13,7 @@ import configparser
 import json
 import subprocess
 import time
+import sqlite3
 # this requires python 3.4
 import pathlib
 from pprint import pprint
@@ -147,7 +148,9 @@ def process_section(conf, section):
 		    # make sure the file exists, in case stack has never been healthy
 		    # (should also error immediately if a bad path is provided in the config file)
 		    if (not stackPath.exists()):
-		        stackPath.touch()
+		        conn = sqlite3.connect(stackPath)
+			cursor = conn.cursor()
+			cursor.execute('CREATE TABLE badServices (serviceName text)')
 			
 		if stackData[myStack]['healthState'] == 'healthy':
 			stackState = 0
