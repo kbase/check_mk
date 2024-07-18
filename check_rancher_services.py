@@ -180,7 +180,7 @@ def process_section(conf, section):
 					conn.execute('DELETE FROM badServices WHERE serviceId = ?', [ healthSvc['id'] ] )
 					conn.commit()
 				else:
-					conn.execute('DELETE FROM badServices WHERE serviceId = ?', [ healthSvc['id'] ] )
+					conn.execute('INSERT OR IGNORE INTO badServices (serviceId, serviceName) VALUES ( ?,?)', [ healthSvc['id'] healthSvc['name']] )
 					conn.commit()
 					
 
