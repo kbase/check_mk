@@ -200,7 +200,7 @@ def process_section(conf, section):
 #			print (query)
 				cursor.execute(query)
 				reallyBadServices = cursor.fetchall()
-				if (len(reallyBadServices) == 0):
+				if (len(reallyBadServices) > 0):
 					stackState = 2
 					stackStateTxt = 'CRITICAL'
 
