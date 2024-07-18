@@ -189,7 +189,6 @@ def process_section(conf, section):
 #			print (query)
 			cursor.execute(query)
 
-			cursor.execute('SELECT serviceName FROM badServices WHERE (datetime(lastUpdate) < datetime('now ')
 			badServices = cursor.fetchall()
 			if (len(badServices) == 0):
 				# all services now OK, so assume stack OK
