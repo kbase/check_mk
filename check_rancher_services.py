@@ -174,8 +174,9 @@ def process_section(conf, section):
 				healthServiceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 				healthSvc=healthServiceReq.json()
 				print (healthSvc['id'] + ' ' + healthSvc['healthState'])
-				conn.execute('DELETE FROM badServices WHERE serviceId = ?', [ healthSvc['id'] ] )
-				conn.commit()
+				if (healthSvc['healthState'] == 'healthy' or healthSvc['healthState'] == 'started-once'):
+					conn.execute('DELETE FROM badServices WHERE serviceId = ?', [ healthSvc['id'] ] )
+					conn.commit()
 
 			cursor = conn.cursor()
 			cursor.execute('SELECT * FROM badServices')
