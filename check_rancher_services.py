@@ -199,7 +199,7 @@ def process_section(conf, section):
 				stackStateTxt = 'WARNING'
 				stackExtraTxt = 'bad services: ' + ' '.join([ t[0] for t in badServices])
 
-				if (conf.has_option(section,'stack_health_dir') and conf.has_option(section,'stack_health_age') and stackPath.exists()):
+#				if (conf.has_option(section,'stack_health_dir') and conf.has_option(section,'stack_health_age') and stackPath.exists()):
 			# check age, if too old, make state critical
 			# if missing, don't do anything?
 			# not using, soon to remove
