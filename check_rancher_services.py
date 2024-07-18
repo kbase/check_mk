@@ -148,7 +148,7 @@ def process_section(conf, section):
 			# make sure the file exists, in case stack has never been healthy
 			# (should also error immediately if a bad path is provided in the config file)
 			if (not stackPath.exists()):
-				conn = sqlite3.connect(stackPath)
+				conn = sqlite3.connect(stackHealthFile)
 				cursor = conn.cursor()
 				cursor.execute('CREATE TABLE badServices (serviceName text)')
 			
