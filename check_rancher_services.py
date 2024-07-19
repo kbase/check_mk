@@ -61,7 +61,7 @@ def process_section(conf, section):
 	hostsReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/hosts/', auth=(username,password))
 	hostData=hostsReq.json()['data']
 
-# monitor an agent
+# monitor rancher agents
 	for host in hostData:
 		state=3
 		stateText='UNKNOWN'
@@ -94,32 +94,13 @@ def process_section(conf, section):
 		sys.exit(0)
 	stackId = stackData[myStack]['id']
 
-### this part needs a lot of work
-### moving to separate check_rancher_containers.py till we can figure out how to
-### get stats directly from rancher 1.x API
-#	memState = 0
-#	memStateTxt = 'OK'
-#	memCommentTxt = ''
-## can only check stats on the local host
-## to do: try to talk to the websocket to get stats from rancher API instead
-#	dockerStats = dict()
-
-# only get stats if hostid specified (since some hosts' subprocess module is broken)
-#	if hostid is not None:
-#		dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
-##		print(dockerStatsProc)
-#		for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
-#			mylist = line.strip("'").split(':')
-#			memUse = mylist[1].split(' ')
-#			dockerStats[mylist[0]] = memUse[0]
-##		print(dockerStats)
-
+##### test health of listed services (if any)
 # track if there's an old dummy service that wasn't deleted
 	oldDummyService = None
 
 	for serviceId in stackData[myStack]['serviceIds']:
 	#	print (serviceId)
-# in that stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
+# in the stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
 		serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 		svc=serviceReq.json()
 		if svc['name'] == 'checkmkDummy':
@@ -138,6 +119,8 @@ def process_section(conf, section):
 			print (str(serviceState) + ' ' + envname + '_' + stackname + '_' + svc['name'] + ' - ' + serviceStateTxt + ' running instances: ' + str(svc['currentScale']))
 	#	    print svc['healthState']
 
+
+##### test overall stack health
 	if (conf.has_option(section,'test_stack_health') and conf.getboolean(section,'test_stack_health') is True):
 		stackState = 3
 		stackStateTxt = 'UNKNOWN'
@@ -164,12 +147,10 @@ def process_section(conf, section):
 				conn.execute('DELETE FROM badServices')
 				conn.commit()
 
-# plan: look through services in stack
-# if service healthy, delete from table
-# if service unhealthy, insert or ignore (ignore preserves original timestamp)
-# after all services in stack are done, look through table, if any service timestamp is too old, throw alert
+##### if stack reports degraded, look through services in stack to verify
+# (rancher 1 doesn't really report this very well)
 		else:
-			# we're trolling this again, meh
+			# we're trolling this again, meh. but only when stack is unhealthy, so don't worry about it
 			for serviceId in stackData[myStack]['serviceIds']:
 				healthServiceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 				healthSvc=healthServiceReq.json()
@@ -183,10 +164,12 @@ def process_section(conf, section):
 					
 
 			cursor = conn.cursor()
+			# this should return only services that have been unhealthy for a while (in theory persistently unhealthy)
 			query = "SELECT serviceName FROM badServices WHERE (datetime(lastUpdate) < datetime('now','-" + conf[section]['stack_health_age'] + " seconds' ))"
 #			print (query)
 			cursor.execute(query)
 
+			# fetchall isn't great in theory, but in practice we should have very few rows in these tables
 			badServices = cursor.fetchall()
 			if (len(badServices) == 0):
 				# all services now OK, so assume stack OK
@@ -204,48 +187,15 @@ def process_section(conf, section):
 					stackState = 2
 					stackStateTxt = 'CRITICAL'
 
-# ideally, have something here to set state CRITICAL if age is even older (maybe 2x what's in the ini file?)
-
-#				if (conf.has_option(section,'stack_health_dir') and conf.has_option(section,'stack_health_age') and stackPath.exists()):
-			# check age, if too old, make state critical
-			# if missing, don't do anything?
-			# not using, soon to remove
-#					if (time.time() - stackPath.stat().st_mtime > float(conf[section]['stack_health_age'])):
-#						stackState = 2
-#						stackStateTxt = 'CRITICAL (state ' + str(int(time.time() - stackPath.stat().st_mtime)) + 'sec old)'
-
 		conn.close()
 		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'] + stackExtraTxt)
-
-# if on a host running containers, check their resources
-# assume only one instance per service
-### this part needs lots of work
-#		if hostid is not None:
-#			instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
-#			rancherInstance=instanceReq.json()
-# to do: give a hostname, and match it up to the rancher API hostId
-# otherwise, if the hostId changes, such as if a host is removed and added back to Rancher,
-# the container memory check will always be OK
-#			if rancherInstance['hostId'] == hostid:
-##				print (rancherInstance['name'] + ' ' + rancherInstance['externalId'])
-#				memUse = dockerStats[rancherInstance['externalId']]
-##				print (memUse)
-## crude hack: docker stats outputs human readable.  assume we only care about GB or more use
-## future: better calculations
-#				if 'G' in memUse:
-#					memState = 1
-#					memStateTxt = 'WARNING'
-#					memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ;; ')
-
-#	if hostid is not None:
-#		print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory-' + hostid + ' - ' + memStateTxt + ' big mem containers on host ' + hostid + ' : ' + memCommentTxt)
 
 	if (not conf.has_option(section,'test_create_new')):
 		return None
 	if (conf.getboolean(section,'test_create_new') is False):
 		return None
 
-### spin up a dummy new service
+##### if requested in config, test spinning up a dummy new service
 # initially copied from narrative-traefiker
 	containerConfig = {u'assignServiceIpAddress': False,
                         u'createIndex': None,
@@ -392,10 +342,7 @@ def process_section(conf, section):
 	print (str(dummyServiceState) + ' ' + envname + '_' + stackname + '_createNewService - ' + dummyServiceStateTxt)
 
 
-# in each service find the last logs?  may be hard, need websocket
-
-
-# main loop
+##### main loop
 # if args provided, use them, otherwise use sections from config file
 if args.sections:
 	sections = args.sections
@@ -405,4 +352,3 @@ else:
 for section in sections:
 #	print (section)
 	process_section(conf, section)
-
