@@ -32,20 +32,11 @@ driveStateString = ''
 for server in (minioInfo['info']['servers']):
     # server state; alert if not "ok"
     serverStateString += ' ' + server['endpoint'] + ' : ' + server['state']
-    if (server['state'] != 'ok'):
+    if (server['state'] != 'online'):
         # not sure what other states are possible, some might be warning only
         status = 2
     for drive in (server['drives']):
-# if there's an unformatted drive on a remote, it has only these keys
-# if there's a healthy drive on a remote, or an unformatted drive on the
-# serving instance, there is a path key as well
-# so...construct an endpoint from server['endpoint']+drive['path']
-# and if drive['path'] doesn't exist, use drive['endpoint'] 
-        try:
-            driveEndpoint = server['endpoint'] + ':' + drive['path']
-        except:
-# try to strip leading "https:" from this to be consistent with above
-            driveEndpoint = drive['endpoint'].replace('https://','')
+        driveEndpoint = drive['endpoint'].replace('https://','')
 # drive state; alert if not "ok"
         if (drive['state'] != 'ok' or 'healing' in drive):
             # assume a missing drive is not critical
@@ -56,6 +47,6 @@ for server in (minioInfo['info']['servers']):
             # since there are so many drives, only add unhealthy ones to output
             driveStateString += ' ' + driveEndpoint + ' : ' + drive['state'] + ' ' + driveExtraInfo
 
-print ("%d Minio_status - %s - %s %s %s" % (status, status_strings[status], clusterModeString, serverStateString, driveStateString) )
+print ("%d MinIO_status - %s - %s %s %s" % (status, status_strings[status], clusterModeString, serverStateString, driveStateString) )
 
 exit (status)
