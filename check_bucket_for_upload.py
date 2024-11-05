@@ -27,7 +27,7 @@ def check_recent_file(bucket_name, days_threshold, file_path, file_pattern):
         print(f"OK - Recent file '{recent_file_name}' found in '{file_path}' within the last {days_threshold} days.")
         sys.exit(0)
     else:
-        print(f"CRITICAL - No file matching pattern '{file_pattern}' in '{file_path}' uploaded to GCP in the last {days_threshold} days.")
+        print(f"CRITICAL - No file matching pattern '{file_pattern}' in '{file_path}' uploaded to GCP bucket {bucket_name} in the last {days_threshold} days.")
         sys.exit(2)
 
 
