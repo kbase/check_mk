@@ -5,7 +5,7 @@ then
     STAT_VERSION=$(stat --version | head -1 | cut -d" " -f4)
     STAT_BROKE="5.3.0"
 
-    sed -n '/ xfs\? /s/[^ ]* \([^ ]*\) .*/\1/p' < /proc/mounts |
+    sed -n '/ xfs\? /s/[^ ]* \([^ ]*\) .*/\1/p' < /proc/mounts | grep -v var/lib/kubelet/pods |
 #    sed -n '/ xfs\? /s/[^ ]* \([^ ]*\) .*/\1/p' < /root/dummyMounts |
         while read MP
         do
