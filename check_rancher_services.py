@@ -72,13 +72,16 @@ def process_section(conf, section):
 		if (host['state'] == 'active'):
 			state=0
 			stateText='OK'
+		if (host['state'] == 'inactive'):
+			state=1
+			stateText='WARNING'
 
 		instanceReq=session.get(host['links']['instances'] + '?limit=500' ,auth=(username,password))
 		instanceData=instanceReq.json()['data']
 	#	print len(instanceData)
 	#	for instance in instanceData:
 	#		print instance
-		print (str(state) + ' rancher_agent_' + host['hostname'] + ' numContainers=' + str(len(instanceData)) + ';;;20;500 '  + stateText + ' host ' + host['hostname'] + ' running containers: ' + str(len(instanceData)))
+		print (str(state) + ' rancher_agent_' + host['hostname'] + ' numContainers=' + str(len(instanceData)) + ';;;20;500 '  + stateText + ' host ' + host['hostname'] + ' ; state: ' + host['state'] + ' ; running containers: ' + str(len(instanceData)))
 
 # to do: monitor services inside a stack
 	stackReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/stacks/', auth=(username,password))
