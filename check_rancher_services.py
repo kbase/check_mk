@@ -13,6 +13,7 @@ import configparser
 import json
 import subprocess
 import time
+import sqlite3
 # this requires python 3.4
 import pathlib
 from pprint import pprint
@@ -60,7 +61,7 @@ def process_section(conf, section):
 	hostsReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/hosts/', auth=(username,password))
 	hostData=hostsReq.json()['data']
 
-# monitor an agent
+# monitor rancher agents
 	for host in hostData:
 		state=3
 		stateText='UNKNOWN'
@@ -96,32 +97,13 @@ def process_section(conf, section):
 		sys.exit(0)
 	stackId = stackData[myStack]['id']
 
-### this part needs a lot of work
-### moving to separate check_rancher_containers.py till we can figure out how to
-### get stats directly from rancher 1.x API
-#	memState = 0
-#	memStateTxt = 'OK'
-#	memCommentTxt = ''
-## can only check stats on the local host
-## to do: try to talk to the websocket to get stats from rancher API instead
-#	dockerStats = dict()
-
-# only get stats if hostid specified (since some hosts' subprocess module is broken)
-#	if hostid is not None:
-#		dockerStatsProc = subprocess.run(["docker", "stats", "--no-stream", "--no-trunc", "-a", "--format", "'{{.ID}}:{{.MemUsage}}'"], stdout=subprocess.PIPE)
-##		print(dockerStatsProc)
-#		for line in dockerStatsProc.stdout.decode('utf-8').rstrip().split('\n'):
-#			mylist = line.strip("'").split(':')
-#			memUse = mylist[1].split(' ')
-#			dockerStats[mylist[0]] = memUse[0]
-##		print(dockerStats)
-
+##### test health of listed services (if any)
 # track if there's an old dummy service that wasn't deleted
 	oldDummyService = None
 
 	for serviceId in stackData[myStack]['serviceIds']:
 	#	print (serviceId)
-# in that stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
+# in the stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
 		serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 		svc=serviceReq.json()
 		if svc['name'] == 'checkmkDummy':
@@ -140,66 +122,83 @@ def process_section(conf, section):
 			print (str(serviceState) + ' ' + envname + '_' + stackname + '_' + svc['name'] + ' - ' + serviceStateTxt + ' running instances: ' + str(svc['currentScale']))
 	#	    print svc['healthState']
 
+
+##### test overall stack health
 	if (conf.has_option(section,'test_stack_health') and conf.getboolean(section,'test_stack_health') is True):
 		stackState = 3
 		stackStateTxt = 'UNKNOWN'
+		stackExtraTxt = ''
 
 		if (conf.has_option(section,'stack_health_dir')):
-		    stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth'
-		    stackPath = pathlib.Path(stackHealthFile)
-		    # make sure the file exists, in case stack has never been healthy
-		    # (should also error immediately if a bad path is provided in the config file)
-		    if (not stackPath.exists()):
-		        stackPath.touch()
-			
+			stackHealthFile = conf[section]['stack_health_dir'] + '/' + envname + '_' + stackname + '_stackHealth.db'
+			stackPath = pathlib.Path(stackHealthFile)
+			# make sure the db file exists, in case stack has never been checked
+			# (should also error immediately if a bad path is provided in the config file)
+			if (not stackPath.exists()):
+				conn = sqlite3.connect(stackHealthFile)
+				conn.execute('CREATE TABLE badServices (serviceId TEXT PRIMARY KEY, serviceName TEXT, lastUpdate DATETIME DEFAULT CURRENT_TIMESTAMP)')
+				conn.commit()
+				conn.close()
+
+		conn = sqlite3.connect(stackHealthFile)
+
 		if stackData[myStack]['healthState'] == 'healthy':
 			stackState = 0
 			stackStateTxt = 'OK'
 			if (conf.has_option(section,'stack_health_dir')):
-			    stackPath.touch()
-#		if stackData[myStack]['healthState'] == 'degraded':
-		# this may be too broad, but let's see if it's a problem
+# just assume all services are healthy if stack is, and delete all bad services from the db
+				conn.execute('DELETE FROM badServices')
+				conn.commit()
+
+##### if stack reports degraded, look through services in stack to verify
+# (rancher 1 doesn't really report this very well)
 		else:
-			stackState = 1
-			stackStateTxt = 'WARNING'
-			if (conf.has_option(section,'stack_health_dir') and conf.has_option(section,'stack_health_age') and stackPath.exists()):
-			    # check age, if too old, make state critical
-			    # if missing, don't do anything?
-			    if (time.time() - stackPath.stat().st_mtime > float(conf[section]['stack_health_age'])):
-			        stackState = 2
-			        stackStateTxt = 'CRITICAL (state ' + str(int(time.time() - stackPath.stat().st_mtime)) + 'sec old)'
+			# we're trolling this again, meh. but only when stack is unhealthy, so don't worry about it
+			for serviceId in stackData[myStack]['serviceIds']:
+				healthServiceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
+				healthSvc=healthServiceReq.json()
+#				print (healthSvc['id'] + ' ' + healthSvc['healthState'])
+				if (healthSvc['healthState'] == 'healthy' or healthSvc['healthState'] == 'started-once'):
+					conn.execute('DELETE FROM badServices WHERE serviceId = ?', [ healthSvc['id'] ] )
+					conn.commit()
+				else:
+					conn.execute('INSERT OR IGNORE INTO badServices (serviceId, serviceName) VALUES (?,?)', [ healthSvc['id'], healthSvc['name']] )
+					conn.commit()
+					
 
-		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'])
+			cursor = conn.cursor()
+			# this should return only services that have been unhealthy for a while (in theory persistently unhealthy)
+			query = "SELECT serviceName FROM badServices WHERE (datetime(lastUpdate) < datetime('now','-" + conf[section]['stack_health_age'] + " seconds' ))"
+#			print (query)
+			cursor.execute(query)
 
-# if on a host running containers, check their resources
-# assume only one instance per service
-### this part needs lots of work
-#		if hostid is not None:
-#			instanceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/instances/' + svc['instanceIds'][0], auth=(username,password))
-#			rancherInstance=instanceReq.json()
-# to do: give a hostname, and match it up to the rancher API hostId
-# otherwise, if the hostId changes, such as if a host is removed and added back to Rancher,
-# the container memory check will always be OK
-#			if rancherInstance['hostId'] == hostid:
-##				print (rancherInstance['name'] + ' ' + rancherInstance['externalId'])
-#				memUse = dockerStats[rancherInstance['externalId']]
-##				print (memUse)
-## crude hack: docker stats outputs human readable.  assume we only care about GB or more use
-## future: better calculations
-#				if 'G' in memUse:
-#					memState = 1
-#					memStateTxt = 'WARNING'
-#					memCommentTxt += (svc['name'] + ': ' + str(memUse) + ' ;; ')
+			# fetchall isn't great in theory, but in practice we should have very few rows in these tables
+			badServices = cursor.fetchall()
+			if (len(badServices) == 0):
+				# all services now OK, so assume stack OK
+				stackState = 0
+				stackStateTxt = 'OK'
+			else:
+				stackState = 1
+				stackStateTxt = 'WARNING'
+				stackExtraTxt = ' ; bad services: ' + ' '.join([ t[0] for t in badServices])
+				query = "SELECT serviceName FROM badServices WHERE (datetime(lastUpdate) < datetime('now','-" + str(2 * int(conf[section]['stack_health_age'])) + " seconds' ))"
+#			print (query)
+				cursor.execute(query)
+				reallyBadServices = cursor.fetchall()
+				if (len(reallyBadServices) > 0):
+					stackState = 2
+					stackStateTxt = 'CRITICAL'
 
-#	if hostid is not None:
-#		print (str(memState) + ' ' + envname + '_' + stackname + '_containerMemory-' + hostid + ' - ' + memStateTxt + ' big mem containers on host ' + hostid + ' : ' + memCommentTxt)
+		conn.close()
+		print (str(stackState) + ' ' + envname + '_' + stackname + '_stackHealth - ' + stackStateTxt + ' stack health is ' + stackData[myStack]['healthState'] + stackExtraTxt)
 
 	if (not conf.has_option(section,'test_create_new')):
 		return None
 	if (conf.getboolean(section,'test_create_new') is False):
 		return None
 
-### spin up a dummy new service
+##### if requested in config, test spinning up a dummy new service
 # initially copied from narrative-traefiker
 	containerConfig = {u'assignServiceIpAddress': False,
                         u'createIndex': None,
@@ -346,10 +345,7 @@ def process_section(conf, section):
 	print (str(dummyServiceState) + ' ' + envname + '_' + stackname + '_createNewService - ' + dummyServiceStateTxt)
 
 
-# in each service find the last logs?  may be hard, need websocket
-
-
-# main loop
+##### main loop
 # if args provided, use them, otherwise use sections from config file
 if args.sections:
 	sections = args.sections
@@ -359,4 +355,3 @@ else:
 for section in sections:
 #	print (section)
 	process_section(conf, section)
-
