@@ -5,8 +5,7 @@ then
     STAT_VERSION=$(stat --version | head -1 | cut -d" " -f4)
     STAT_BROKE="5.3.0"
 
-    sed -n '/ xfs\? /s/[^ ]* \([^ ]*\) .*/\1/p' < /proc/mounts |
-#    sed -n '/ xfs\? /s/[^ ]* \([^ ]*\) .*/\1/p' < /root/dummyMounts |
+    lsblk -l -o fstype,mountpoint | tr -s " " | grep "^xfs" | cut -d " " -f2 |
         while read MP
         do
          if [ $STAT_VERSION != $STAT_BROKE ]; then
