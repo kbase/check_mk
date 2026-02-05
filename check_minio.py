@@ -32,7 +32,7 @@ driveStateString = ''
 for server in (minioInfo['info']['servers']):
     # server state; alert if not "ok"
     serverStateString += ' ' + server['endpoint'] + ' : ' + server['state']
-    if (server['state'] != 'ok'):
+    if (server['state'] != 'online'):
         # not sure what other states are possible, some might be warning only
         status = 2
     for drive in (server['drives']):
