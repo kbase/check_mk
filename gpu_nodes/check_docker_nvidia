@@ -1,0 +1,4 @@
+#!/bin/sh
+docker pull ubuntu > /dev/null 2>&1
+OUTPUT=$(docker run --rm --gpus all ubuntu nvidia-smi 2>&1 | grep "Driver Version")
+[ $? -eq 0 ] && echo "0 Docker_NVIDIA_SMI - OK: $OUTPUT" || echo "2 Docker_NVIDIA_SMI - CRIT: $OUTPUT"
