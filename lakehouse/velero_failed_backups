@@ -85,6 +85,11 @@ def main() -> None:
         print(f"0 Velero_Backups count={len(backups)} OK: all {len(backups)} backup(s) completed successfully")
         return
 
+    print(
+        f"2 Velero_Backups count={len(backups)} failed={len(bad)} "
+        f"CRIT: {len(bad)} of {len(backups)} backup(s) failed or partially failed"
+    )
+
     for line in bad:
         print(line)
 
