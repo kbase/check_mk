@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""
+CheckMK local check: failed Velero backups
+
+Deploy to: /usr/lib/check_mk_agent/local/velero_failed_backups
+Make executable: chmod +x /usr/lib/check_mk_agent/local/velero_failed_backups
+
+Status mapping:
+  0 (OK)      – all backups completed successfully
+  2 (CRIT)    – one or more backups are Failed or PartiallyFailed
+  3 (UNKNOWN) – kubectl/parse error
+"""
+
+import json
+import subprocess
+import sys
+
+KUBECTL = "microk8s kubectl"
+FAILED_PHASES = {"Failed", "PartiallyFailed"}
+
+
+def get_backups() -> list[dict]:
+    try:
+        result = subprocess.run(
+            f"{KUBECTL} get backups -A -o json",
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except subprocess.TimeoutExpired:
+        print("3 Velero_Backups - UNKNOWN: kubectl timed out")
+        sys.exit(0)
+
+    if result.returncode != 0:
+        stderr = result.stderr.strip().replace("\n", " ")
+        print(f"3 Velero_Backups - UNKNOWN: kubectl error – {stderr}")
+        sys.exit(0)
+
+    try:
+        return json.loads(result.stdout).get("items", [])
+    except json.JSONDecodeError as exc:
+        print(f"3 Velero_Backups - UNKNOWN: JSON parse error – {exc}")
+        sys.exit(0)
+
+
+def service_name(key: str) -> str:
+    return "Velero_Backup_" + key.replace("/", "_").replace("-", "_")
+
+
+def main() -> None:
+    backups = get_backups()
+
+    if not backups:
+        print("0 Velero_Backups count=0 OK: no backups found (is Velero installed?)")
+        return
+
+    bad = []
+
+    for backup in backups:
+        meta   = backup.get("metadata", {})
+        status = backup.get("status", {})
+        phase  = status.get("phase", "Unknown")
+
+        if phase not in FAILED_PHASES:
+            continue
+
+        namespace = meta.get("namespace", "unknown")
+        name      = meta.get("name", "unknown")
+        key       = f"{namespace}/{name}"
+        errors    = status.get("errors", 0)
+        warnings  = status.get("warnings", 0)
+        start     = status.get("startTimestamp", "unknown")
+        expiry    = status.get("expiration", "unknown")
+
+        perf   = f"errors={errors};0;0 warnings={warnings};0;0"
+        detail = (
+            f"{phase} | started: {start} | "
+            f"errors: {errors}, warnings: {warnings} | "
+            f"expires: {expiry}"
+        )
+
+        bad.append(f"2 {service_name(key)} {perf} CRIT: {key} – {detail}")
+
+    if not bad:
+        print(f"0 Velero_Backups count={len(backups)} OK: all {len(backups)} backup(s) completed successfully")
+        return
+
+    for line in bad:
+        print(line)
+
+
+if __name__ == "__main__":
+    main()
