@@ -15,15 +15,14 @@ import json
 import subprocess
 import sys
 
-KUBECTL = "microk8s kubectl"
+KUBECTL = ["microk8s", "kubectl"]
 FAILED_PHASES = {"Failed", "PartiallyFailed"}
 
 
 def get_backups() -> list[dict]:
     try:
         result = subprocess.run(
-            f"{KUBECTL} get backups -A -o json",
-            shell=True,
+            KUBECTL + ["get", "backups", "-A", "-o", "json"],
             capture_output=True,
             text=True,
             timeout=30,
