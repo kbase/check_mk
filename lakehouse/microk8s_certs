@@ -1,0 +1,17 @@
+#!/bin/bash
+cmd=$(/snap/bin/microk8s refresh-certs --check | awk '
+/certificate will expire in/ {
+  d=$(NF-1)+0
+  if (d < 30) {
+    line=$0; sub(/^The /,"",line); sub(/ certificate.*/,"",line)
+    if (line=="CA") { print "microk8s refresh-certs -e ca.crt` - this will TERMINATE all running workloads"; next }
+    c=tolower(line); gsub(/ /,"-",c)
+    print "microk8s refresh-certs -e " c ".crt`"
+  }
+}' | head -1)
+
+if [ -n "$cmd" ]; then
+  echo "2 \"MicroK8s Certs\" - Refresh microk8s cert with \`$cmd"
+else
+  echo '0 "MicroK8s Certs" - all certificates valid'
+fi
