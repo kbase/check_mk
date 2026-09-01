@@ -82,9 +82,11 @@ def main():
 
     if failed_children:
         print(f"failed CronJobs:  {', '.join(failed_children)} ; CronJobs checked: {', '.join(cronjob_names)}")
-    else:
+    elif status == 0:
 #        print(str(status) + f" ok      {ns}/{name}  ({len(children)} job(s))")
         print(f"all CronJobs OK, CronJobs checked: {', '.join(cronjob_names)}")
+    else:
+        print(f"status of CronJobs unknown, CronJobs checked: {', '.join(cronjob_names)}")
 
     # required in order to exit script with correct exit value
     return status
