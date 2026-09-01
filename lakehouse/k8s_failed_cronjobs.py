@@ -55,7 +55,14 @@ def main():
         uid = cj.metadata.uid
 
         cronjob_names.append(cj.metadata.namespace+'/'+cj.metadata.name)
-        children = jobs_by_cronjob_uid.get(uid, [])
+        children = sorted(
+            jobs_by_cronjob_uid.get(uid, []),
+            key=lambda j: (
+                (j.status.start_time or j.metadata.creation_timestamp).timestamp()
+                if (j.status.start_time or j.metadata.creation_timestamp)
+                else 0.0
+            ),
+        )
 
         cronjobstatus=3
         # setting the status like this depends on jobs being sorted by date
