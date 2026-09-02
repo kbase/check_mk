@@ -33,17 +33,26 @@ def load_kube_config():
 
 def main():
     load_kube_config()
-    batch = kubernetes.client.BatchV1Api()
-
-    cronjobs = batch.list_cron_job_for_all_namespaces().items
-    jobs = batch.list_job_for_all_namespaces().items
-
+    try:
+        batch = kubernetes.client.BatchV1Api()
+    except:
+        print("can't connect to k8s")
+    
+    try:
+        cronjobs = batch.list_cron_job_for_all_namespaces().items
+        jobs = batch.list_job_for_all_namespaces().items
+    except:
+        print("can't get CronJobs from k8s")
+    
     # Index jobs by their owning CronJob's uid
     jobs_by_cronjob_uid = {}
     for job in jobs:
         for ref in job.metadata.owner_references or []:
             if ref.kind == "CronJob":
-                jobs_by_cronjob_uid.setdefault(ref.uid, []).append(job)
+                try:
+                    jobs_by_cronjob_uid.setdefault(ref.uid, []).append(job)
+                except:
+                    print("can't get Jobs from k8s")
 
     cronjob_names = []
     failed_children = []
