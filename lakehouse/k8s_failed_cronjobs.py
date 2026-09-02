@@ -74,7 +74,7 @@ def main():
                 failed_children.append(job.metadata.name)
                 cronjobstatus=2
             # explicitly look for success
-            elif any(c.type == "SuccessCriteriaMet" and c.status == "True" for c in conditions):
+            elif any(c.type == "Complete" and c.status == "True" for c in conditions):
                 if (len(failed_children) > 0):
                     cronjobstatus=1
                 else:
