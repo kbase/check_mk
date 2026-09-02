@@ -32,7 +32,11 @@ def load_kube_config():
 
 
 def main():
-    load_kube_config()
+    try:
+        load_kube_config()
+    except kubernetes.config.ConfigException as exc:
+        print(f"can't load Kubernetes configuration: {exc}")
+        return 3
     try:
         batch = kubernetes.client.BatchV1Api()
     except:
