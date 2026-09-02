@@ -80,7 +80,7 @@ def main():
             #print (str(job))
             conditions = job.status.conditions or []
             if any(c.type == "Failed" and c.status == "True" for c in conditions):
-                failed_children.append(job.metadata.name)
+                failed_children.append(f"{job.metadata.namespace}/{job.metadata.name}")
                 cronjobstatus=2
             # explicitly look for success
             elif any(c.type == "Complete" and c.status == "True" for c in conditions):
