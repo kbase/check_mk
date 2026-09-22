@@ -27,8 +27,8 @@ def get_statefulsets() -> list[dict]:
             text=True,
             timeout=30,
         )
-    except FileNotFoundError:
-        print("3 K8s_StatefulSets - UNKNOWN: microk8s kubectl not found")
+    except OSError as exc:
+        print(f"3 K8s_StatefulSets - UNKNOWN: failed to execute kubectl - {exc}")
         sys.exit(0)
     except subprocess.TimeoutExpired:
         print("3 K8s_StatefulSets - UNKNOWN: kubectl timed out")
@@ -53,21 +53,23 @@ def get_statefulsets() -> list[dict]:
 
 
 def service_name(key: str) -> str:
-    return "K8s_StatefulSet_" + key.replace("/", "_").replace("-", "_")
+    # namespace/name are DNS-1123 labels (lowercase alphanumeric and '-' only),
+    # so '_' is safe as a separator without colliding with '-' in the original names.
+    return "K8s_StatefulSet_" + key.replace("/", "_")
 
 
-def expected_updated_replicas(statefulset: dict, desired: int) -> int | None:
-    strategy = statefulset.get("spec", {}).get("updateStrategy", {}) or {}
-    strategy_type = strategy.get("type", "RollingUpdate")
+def rollout_issue(statefulset: dict, desired: int, updated: int) -> str | None:
+    status = statefulset.get("status", {})
+    current_revision = status.get("currentRevision", "")
+    update_revision = status.get("updateRevision", "")
 
-    if strategy_type != "RollingUpdate":
-        return None
+    if current_revision and update_revision and current_revision != update_revision:
+        return f"rollout incomplete ({updated}/{desired} updated to revision {update_revision})"
 
-    partition = strategy.get("rollingUpdate", {}).get("partition", 0) or 0
-    return max(desired - partition, 0)
+    return None
 
 
-def service_line(statefulset: dict) -> tuple[bool, str]:
+def service_line(statefulset: dict) -> str:
     meta = statefulset.get("metadata", {})
     spec = statefulset.get("spec", {})
     status = statefulset.get("status", {})
@@ -94,26 +96,25 @@ def service_line(statefulset: dict) -> tuple[bool, str]:
     if ready < desired:
         issues.append(f"ready {ready}/{desired}")
 
-    expected_updated = expected_updated_replicas(statefulset, desired)
-    if expected_updated is not None and updated < expected_updated:
-        issues.append(f"updated {updated}/{expected_updated}")
+    issue = rollout_issue(statefulset, desired, updated)
+    if issue:
+        issues.append(issue)
 
-    perf = f"desired={desired} ready={ready} replicas={replicas} updated={updated}"
+    perf = f"desired={desired}|ready={ready}|replicas={replicas}|updated={updated}"
 
     if not issues:
-        return True, f"0 {service_name(key)} {perf} OK: {key} - fully ready and deployed"
+        return f"0 {service_name(key)} {perf} OK: {key} - fully ready and deployed"
 
-    return False, f"2 {service_name(key)} {perf} CRIT: {key} - {'; '.join(issues)}"
+    return f"2 {service_name(key)} {perf} CRIT: {key} - {'; '.join(issues)}"
 
 
 def main() -> None:
     statefulsets = get_statefulsets()
 
     if not statefulsets:
+        # Emit a single OK roll-up so the service stays visible when all is well
         print("0 K8s_StatefulSets count=0 OK: no StatefulSets found")
         return
-
-    lines = []
 
     for statefulset in sorted(
         statefulsets,
@@ -122,11 +123,7 @@ def main() -> None:
             item.get("metadata", {}).get("name", ""),
         ),
     ):
-        _, line = service_line(statefulset)
-        lines.append(line)
-
-    for line in lines:
-        print(line)
+        print(service_line(statefulset))
 
 
 if __name__ == "__main__":
