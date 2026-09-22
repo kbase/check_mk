@@ -40,10 +40,16 @@ def get_statefulsets() -> list[dict]:
         sys.exit(0)
 
     try:
-        return json.loads(result.stdout).get("items", [])
+        payload = json.loads(result.stdout)
     except json.JSONDecodeError as exc:
         print(f"3 K8s_StatefulSets - UNKNOWN: JSON parse error - {exc}")
         sys.exit(0)
+
+    if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+        print("3 K8s_StatefulSets - UNKNOWN: unexpected kubectl JSON shape")
+        sys.exit(0)
+
+    return payload["items"]
 
 
 def service_name(key: str) -> str:
@@ -82,7 +88,7 @@ def service_line(statefulset: dict) -> tuple[bool, str]:
     if observed_generation < generation:
         issues.append(f"controller has not observed generation {generation} yet")
 
-    if replicas < desired:
+    if replicas != desired:
         issues.append(f"replicas {replicas}/{desired}")
 
     if ready < desired:
