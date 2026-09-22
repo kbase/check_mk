@@ -61,7 +61,7 @@ def expected_updated_replicas(statefulset: dict, desired: int) -> int | None:
     return max(desired - partition, 0)
 
 
-def collect_issue(statefulset: dict) -> str | None:
+def service_line(statefulset: dict) -> tuple[bool, str]:
     meta = statefulset.get("metadata", {})
     spec = statefulset.get("spec", {})
     status = statefulset.get("status", {})
@@ -92,11 +92,12 @@ def collect_issue(statefulset: dict) -> str | None:
     if expected_updated is not None and updated < expected_updated:
         issues.append(f"updated {updated}/{expected_updated}")
 
-    if not issues:
-        return None
-
     perf = f"desired={desired} ready={ready} replicas={replicas} updated={updated}"
-    return f"2 {service_name(key)} {perf} CRIT: {key} - {'; '.join(issues)}"
+
+    if not issues:
+        return True, f"0 {service_name(key)} {perf} OK: {key} - fully ready and deployed"
+
+    return False, f"2 {service_name(key)} {perf} CRIT: {key} - {'; '.join(issues)}"
 
 
 def main() -> None:
@@ -106,7 +107,8 @@ def main() -> None:
         print("0 K8s_StatefulSets count=0 OK: no statefulsets found")
         return
 
-    bad = []
+    lines = []
+    failing = 0
 
     for statefulset in sorted(
         statefulsets,
@@ -115,23 +117,23 @@ def main() -> None:
             item.get("metadata", {}).get("name", ""),
         ),
     ):
-        issue = collect_issue(statefulset)
-        if issue:
-            bad.append(issue)
+        healthy, line = service_line(statefulset)
+        lines.append(line)
+        if not healthy:
+            failing += 1
 
-    if not bad:
+    if failing == 0:
         print(
             f"0 K8s_StatefulSets count={len(statefulsets)} OK: "
             f"all {len(statefulsets)} statefulset(s) are fully ready and deployed"
         )
-        return
+    else:
+        print(
+            f"2 K8s_StatefulSets count={len(statefulsets)} failing={failing} "
+            f"CRIT: {failing} of {len(statefulsets)} statefulset(s) are not fully ready or deployed"
+        )
 
-    print(
-        f"2 K8s_StatefulSets count={len(statefulsets)} failing={len(bad)} "
-        f"CRIT: {len(bad)} of {len(statefulsets)} statefulset(s) are not fully ready or deployed"
-    )
-
-    for line in bad:
+    for line in lines:
         print(line)
 
 
