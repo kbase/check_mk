@@ -104,11 +104,9 @@ def main() -> None:
     statefulsets = get_statefulsets()
 
     if not statefulsets:
-        print("0 K8s_StatefulSets count=0 OK: no statefulsets found")
         return
 
     lines = []
-    failing = 0
 
     for statefulset in sorted(
         statefulsets,
@@ -117,21 +115,8 @@ def main() -> None:
             item.get("metadata", {}).get("name", ""),
         ),
     ):
-        healthy, line = service_line(statefulset)
+        _, line = service_line(statefulset)
         lines.append(line)
-        if not healthy:
-            failing += 1
-
-    if failing == 0:
-        print(
-            f"0 K8s_StatefulSets count={len(statefulsets)} OK: "
-            f"all {len(statefulsets)} statefulset(s) are fully ready and deployed"
-        )
-    else:
-        print(
-            f"2 K8s_StatefulSets count={len(statefulsets)} failing={failing} "
-            f"CRIT: {failing} of {len(statefulsets)} statefulset(s) are not fully ready or deployed"
-        )
 
     for line in lines:
         print(line)
