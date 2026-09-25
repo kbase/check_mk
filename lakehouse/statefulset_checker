@@ -59,12 +59,30 @@ def service_name(key: str) -> str:
 
 
 def rollout_issue(statefulset: dict, desired: int, updated: int) -> str | None:
+    spec = statefulset.get("spec", {})
     status = statefulset.get("status", {})
     current_revision = status.get("currentRevision", "")
     update_revision = status.get("updateRevision", "")
 
     if current_revision and update_revision and current_revision != update_revision:
-        return f"rollout incomplete ({updated}/{desired} updated to revision {update_revision})"
+        strategy = spec.get("updateStrategy", {})
+        strategy_type = strategy.get("type", "RollingUpdate")
+
+        if strategy_type == "OnDelete":
+            return (
+                f"rollout pending manual pod deletion "
+                f"({updated}/{desired} updated to revision {update_revision})"
+            )
+
+        partition = strategy.get("rollingUpdate", {}).get("partition", 0) or 0
+        start_ordinal = spec.get("ordinals", {}).get("start", 0) or 0
+        eligible = max((start_ordinal + desired) - max(start_ordinal, partition), 0)
+
+        if updated < eligible:
+            return (
+                f"rollout incomplete "
+                f"({updated}/{eligible} eligible replicas updated to revision {update_revision})"
+            )
 
     return None
 
