@@ -13,6 +13,10 @@ This reads Events, which Kubernetes expires after ~1h by default. A job that
 failed before that window is not reported even if its Job object is still in a
 Failed state, and a job that keeps retrying will alert, clear, and alert again.
 
+trivy-operator scan jobs are excluded (DEVOPS-2899). Suppressed failures are
+still counted and reported in the detail line, so the exclusion is visible
+rather than silent.
+
 Status mapping:
   0 (OK)      - no job failure events in the cluster's event window
   2 (CRIT)    - one or more jobs have a BackoffLimitExceeded/DeadlineExceeded event
@@ -25,6 +29,20 @@ import sys
 
 KUBECTL = ["microk8s", "kubectl"]
 FAILURE_REASONS = {"BackoffLimitExceeded", "DeadlineExceeded"}
+
+# DEVOPS-2899: trivy-operator constantly recreates these scan jobs, and a failed
+# scan is a scanner problem (usually a rate-limited trivy-db pull), not a problem
+# with the workload being scanned. They were the dominant source of alert noise.
+EXCLUDED_NAMESPACES = {"trivy-operator"}
+
+# trivy-operator can be configured to run scan jobs in the scanned workload's
+# namespace rather than its own, so match its job naming scheme too.
+EXCLUDED_JOB_PREFIXES = (
+    "scan-vulnerabilityreport-",
+    "scan-configauditreport-",
+    "scan-exposedsecretreport-",
+    "scan-sbomreport-",
+)
 
 # Cap the service detail so a churning controller cannot grow the line without bound.
 MAX_LISTED = 10
@@ -68,12 +86,18 @@ def clean(text: str) -> str:
     return text.replace("\n", " ").replace("|", "/").strip()
 
 
-def collect_failures(events: list[dict]) -> dict[str, dict]:
+def is_excluded(namespace: str, job_name: str) -> bool:
+    return namespace in EXCLUDED_NAMESPACES or job_name.startswith(EXCLUDED_JOB_PREFIXES)
+
+
+def collect_failures(events: list[dict]) -> tuple[dict[str, dict], int]:
     """
     Returns a dict keyed by "namespace/job-name", holding the failure reason,
-    the summed event count and the most recent message for that job.
+    the summed event count and the most recent message for that job, plus the
+    number of distinct excluded jobs that failed.
     """
     failures: dict[str, dict] = {}
+    excluded: set[str] = set()
 
     for event in events:
         if not isinstance(event, dict):
@@ -89,24 +113,31 @@ def collect_failures(events: list[dict]) -> dict[str, dict]:
         job_name = obj.get("name", "unknown")
         key = f"{namespace}/{job_name}"
 
+        if is_excluded(namespace, job_name):
+            excluded.add(key)
+            continue
+
         info = failures.setdefault(key, {"reason": "", "count": 0, "message": ""})
         info["reason"] = reason
         info["count"] += event.get("count") or 1
         info["message"] = clean(event.get("message") or "")
 
-    return failures
+    return failures, len(excluded)
 
 
 def main() -> None:
-    failures = collect_failures(get_events())
+    failures, suppressed = collect_failures(get_events())
 
     job_count = len(failures)
     event_count = sum(info["count"] for info in failures.values())
-    # Emitted on both branches so the metric stays graphable across state changes.
-    perf = f"failed_jobs={job_count}|events={event_count}"
+    # Emitted on both branches so the metrics stay graphable across state changes.
+    perf = f"failed_jobs={job_count}|events={event_count}|suppressed={suppressed}"
+
+    # Reported but never alerted on, so a silenced scanner is still visible.
+    note = f" ({suppressed} excluded scan job(s) also failed)" if suppressed else ""
 
     if not failures:
-        print(f"0 K8s_Failed_Jobs {perf} OK: no failed jobs found")
+        print(f"0 K8s_Failed_Jobs {perf} OK: no failed jobs found{note}")
         return
 
     details = [
@@ -121,7 +152,7 @@ def main() -> None:
 
     print(
         f"2 K8s_Failed_Jobs {perf} CRIT: {job_count} job(s) failed, "
-        f"{event_count} failure event(s): " + " :: ".join(listed)
+        f"{event_count} failure event(s){note}: " + " :: ".join(listed)
     )
 
 
