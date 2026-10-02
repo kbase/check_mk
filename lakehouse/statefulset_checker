@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+
+"""
+CheckMK local check: StatefulSet readiness and rollout health
+
+Deploy to: /usr/lib/check_mk_agent/local/statefulset_checker
+Make executable: chmod +x /usr/lib/check_mk_agent/local/statefulset_checker
+
+Status mapping:
+  0 (OK)      - all StatefulSets are fully ready and deployed
+  2 (CRIT)    - one or more StatefulSets are missing ready replicas or have an incomplete rollout
+  3 (UNKNOWN) - kubectl/parse error
+"""
+
+import json
+import subprocess
+import sys
+
+KUBECTL = ["microk8s", "kubectl"]
+
+
+def get_statefulsets() -> list[dict]:
+    try:
+        result = subprocess.run(
+            KUBECTL + ["get", "statefulsets", "-A", "-o", "json"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except OSError as exc:
+        print(f"3 K8s_StatefulSets - UNKNOWN: failed to execute kubectl - {exc}")
+        sys.exit(0)
+    except subprocess.TimeoutExpired:
+        print("3 K8s_StatefulSets - UNKNOWN: kubectl timed out")
+        sys.exit(0)
+
+    if result.returncode != 0:
+        stderr = result.stderr.strip().replace("\n", " ")
+        print(f"3 K8s_StatefulSets - UNKNOWN: kubectl error - {stderr}")
+        sys.exit(0)
+
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        print(f"3 K8s_StatefulSets - UNKNOWN: JSON parse error - {exc}")
+        sys.exit(0)
+
+    if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+        print("3 K8s_StatefulSets - UNKNOWN: unexpected kubectl JSON shape")
+        sys.exit(0)
+
+    return payload["items"]
+
+
+def service_name(key: str) -> str:
+    # namespace/name are DNS-1123 labels (lowercase alphanumeric and '-' only),
+    # so '_' is safe as a separator without colliding with '-' in the original names.
+    return "K8s_StatefulSet_" + key.replace("/", "_")
+
+
+def rollout_issue(statefulset: dict, desired: int, updated: int) -> str | None:
+    spec = statefulset.get("spec", {})
+    status = statefulset.get("status", {})
+    current_revision = status.get("currentRevision", "")
+    update_revision = status.get("updateRevision", "")
+
+    if current_revision and update_revision and current_revision != update_revision:
+        strategy = spec.get("updateStrategy", {})
+        strategy_type = strategy.get("type", "RollingUpdate")
+
+        if strategy_type == "OnDelete":
+            return (
+                f"rollout pending manual pod deletion "
+                f"({updated}/{desired} updated to revision {update_revision})"
+            )
+
+        partition = strategy.get("rollingUpdate", {}).get("partition", 0) or 0
+        start_ordinal = spec.get("ordinals", {}).get("start", 0) or 0
+        eligible = max((start_ordinal + desired) - max(start_ordinal, partition), 0)
+
+        if updated < eligible:
+            return (
+                f"rollout incomplete "
+                f"({updated}/{eligible} eligible replicas updated to revision {update_revision})"
+            )
+
+    return None
+
+
+def service_line(statefulset: dict) -> str:
+    meta = statefulset.get("metadata", {})
+    spec = statefulset.get("spec", {})
+    status = statefulset.get("status", {})
+
+    namespace = meta.get("namespace", "unknown")
+    name = meta.get("name", "unknown")
+    key = f"{namespace}/{name}"
+
+    desired = spec.get("replicas", 1) or 0
+    replicas = status.get("replicas", 0) or 0
+    ready = status.get("readyReplicas", 0) or 0
+    updated = status.get("updatedReplicas", 0) or 0
+    observed_generation = status.get("observedGeneration", 0) or 0
+    generation = meta.get("generation", 0) or 0
+
+    issues = []
+
+    if observed_generation < generation:
+        issues.append(f"controller has not observed generation {generation} yet")
+
+    if replicas != desired:
+        issues.append(f"replicas {replicas}/{desired}")
+
+    if ready < desired:
+        issues.append(f"ready {ready}/{desired}")
+
+    issue = rollout_issue(statefulset, desired, updated)
+    if issue:
+        issues.append(issue)
+
+    perf = f"desired={desired}|ready={ready}|replicas={replicas}|updated={updated}"
+
+    if not issues:
+        return f"0 {service_name(key)} {perf} OK: {key} - fully ready and deployed"
+
+    return f"2 {service_name(key)} {perf} CRIT: {key} - {'; '.join(issues)}"
+
+
+def main() -> None:
+    statefulsets = get_statefulsets()
+
+    if not statefulsets:
+        # Emit a single OK roll-up so the service stays visible when all is well
+        print("0 K8s_StatefulSets count=0 OK: no StatefulSets found")
+        return
+
+    for statefulset in sorted(
+        statefulsets,
+        key=lambda item: (
+            item.get("metadata", {}).get("namespace", ""),
+            item.get("metadata", {}).get("name", ""),
+        ),
+    ):
+        print(service_line(statefulset))
+
+
+if __name__ == "__main__":
+    main()
