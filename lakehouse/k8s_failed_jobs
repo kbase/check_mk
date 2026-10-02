@@ -5,94 +5,155 @@ CheckMK local check: Kubernetes failed jobs (BackoffLimitExceeded / DeadlineExce
 Deploy to: /usr/lib/check_mk_agent/local/k8s_failed_jobs
 Make executable: chmod +x /usr/lib/check_mk_agent/local/k8s_failed_jobs
 
-Each failed job surfaces as its own CheckMK service:
-  "K8s Job Failed: <namespace>/<job-name>"
+Emits a single service, K8s_Failed_Jobs, on every run. One service per job would
+need a fresh CheckMK discovery before each new failure could alert, and job names
+carry a template hash, so discovered services would accumulate forever.
+
+This reads Events, which Kubernetes expires after ~1h by default. A job that
+failed before that window is not reported even if its Job object is still in a
+Failed state, and a job that keeps retrying will alert, clear, and alert again.
+
+trivy-operator scan jobs are excluded (DEVOPS-2899). Suppressed failures are
+still counted and reported in the detail line, so the exclusion is visible
+rather than silent.
 
 Status mapping:
-  0 (OK)   – job no longer has a failure event (stale / resolved)
-  2 (CRIT) – BackoffLimitExceeded or DeadlineExceeded event exists
+  0 (OK)      - no job failure events in the cluster's event window
+  2 (CRIT)    - one or more jobs have a BackoffLimitExceeded/DeadlineExceeded event
+  3 (UNKNOWN) - kubectl/parse error
 """
 
 import json
 import subprocess
 import sys
-from collections import defaultdict
 
-KUBECTL = "microk8s kubectl"
+KUBECTL = ["microk8s", "kubectl"]
 FAILURE_REASONS = {"BackoffLimitExceeded", "DeadlineExceeded"}
+
+# DEVOPS-2899: trivy-operator constantly recreates these scan jobs, and a failed
+# scan is a scanner problem (usually a rate-limited trivy-db pull), not a problem
+# with the workload being scanned. They were the dominant source of alert noise.
+EXCLUDED_NAMESPACES = {"trivy-operator"}
+
+# trivy-operator can be configured to run scan jobs in the scanned workload's
+# namespace rather than its own, so match its job naming scheme too.
+EXCLUDED_JOB_PREFIXES = (
+    "scan-vulnerabilityreport-",
+    "scan-configauditreport-",
+    "scan-exposedsecretreport-",
+    "scan-sbomreport-",
+)
+
+# Cap the service detail so a churning controller cannot grow the line without bound.
+MAX_LISTED = 10
 
 
 def get_events() -> list[dict]:
     try:
         result = subprocess.run(
-            f"{KUBECTL} get events -A -o json",
-            shell=True,
+            KUBECTL + ["get", "events", "-A", "-o", "json"],
             capture_output=True,
             text=True,
             timeout=30,
         )
+    except OSError as exc:
+        print(f"3 K8s_Failed_Jobs - UNKNOWN: failed to execute kubectl - {exc}")
+        sys.exit(0)
     except subprocess.TimeoutExpired:
         print("3 K8s_Failed_Jobs - UNKNOWN: kubectl timed out")
         sys.exit(0)
 
     if result.returncode != 0:
         stderr = result.stderr.strip().replace("\n", " ")
-        print(f"3 K8s_Failed_Jobs - UNKNOWN: kubectl error – {stderr}")
+        print(f"3 K8s_Failed_Jobs - UNKNOWN: kubectl error - {stderr}")
         sys.exit(0)
 
     try:
-        return json.loads(result.stdout).get("items", [])
+        payload = json.loads(result.stdout)
     except json.JSONDecodeError as exc:
-        print(f"3 K8s_Failed_Jobs - UNKNOWN: JSON parse error – {exc}")
+        print(f"3 K8s_Failed_Jobs - UNKNOWN: JSON parse error - {exc}")
         sys.exit(0)
 
+    if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+        print("3 K8s_Failed_Jobs - UNKNOWN: unexpected kubectl JSON shape")
+        sys.exit(0)
 
-def collect_failures(events: list[dict]) -> dict[str, dict]:
+    return payload["items"]
+
+
+def clean(text: str) -> str:
+    # '|' separates perfdata from plugin output in CheckMK, so keep it out of the detail.
+    return text.replace("\n", " ").replace("|", "/").strip()
+
+
+def is_excluded(namespace: str, job_name: str) -> bool:
+    return namespace in EXCLUDED_NAMESPACES or job_name.startswith(EXCLUDED_JOB_PREFIXES)
+
+
+def collect_failures(events: list[dict]) -> tuple[dict[str, dict], int]:
     """
-    Returns a dict keyed by "namespace/job-name".
-    Each value holds the most recent failure reason and event count.
+    Returns a dict keyed by "namespace/job-name", holding the failure reason,
+    the summed event count and the most recent message for that job, plus the
+    number of distinct excluded jobs that failed.
     """
-    failures: dict[str, dict] = defaultdict(lambda: {"reason": "", "count": 0, "message": ""})
+    failures: dict[str, dict] = {}
+    excluded: set[str] = set()
 
     for event in events:
-        obj = event.get("involvedObject", {})
+        if not isinstance(event, dict):
+            continue
+
+        obj = event.get("involvedObject") or {}
         reason = event.get("reason", "")
 
         if obj.get("kind") != "Job" or reason not in FAILURE_REASONS:
             continue
 
-        namespace = event.get("metadata", {}).get("namespace", "unknown")
+        namespace = (event.get("metadata") or {}).get("namespace", "unknown")
         job_name = obj.get("name", "unknown")
         key = f"{namespace}/{job_name}"
 
-        failures[key]["reason"] = reason
-        failures[key]["count"] += event.get("count", 1)
-        failures[key]["message"] = event.get("message", "").replace("\n", " ")
+        if is_excluded(namespace, job_name):
+            excluded.add(key)
+            continue
 
-    return failures
+        info = failures.setdefault(key, {"reason": "", "count": 0, "message": ""})
+        info["reason"] = reason
+        info["count"] += event.get("count") or 1
+        info["message"] = clean(event.get("message") or "")
 
-
-def service_name(key: str) -> str:
-    """Produce a stable, space-free CheckMK service identifier."""
-    return "K8s_Job_Failed_" + key.replace("/", "_").replace("-", "_")
+    return failures, len(excluded)
 
 
 def main() -> None:
-    events = get_events()
-    failures = collect_failures(events)
+    failures, suppressed = collect_failures(get_events())
+
+    job_count = len(failures)
+    event_count = sum(info["count"] for info in failures.values())
+    # Emitted on both branches so the metrics stay graphable across state changes.
+    perf = f"failed_jobs={job_count}|events={event_count}|suppressed={suppressed}"
+
+    # Reported but never alerted on, so a silenced scanner is still visible.
+    note = f" ({suppressed} excluded scan job(s) also failed)" if suppressed else ""
 
     if not failures:
-        # Emit a single OK roll-up so the service stays visible when all is well
-        print("0 K8s_Failed_Jobs count=0 OK: no failed jobs found")
+        print(f"0 K8s_Failed_Jobs {perf} OK: no failed jobs found{note}")
         return
 
-    for key, info in sorted(failures.items()):
-        svc = service_name(key)
-        reason = info["reason"]
-        count = info["count"]
-        msg = info["message"] or "no details"
-        perf = f"event_count={count}"
-        print(f"2 {svc} {perf} CRIT: {key} – {reason} (events: {count}) | {msg}")
+    details = [
+        f"{key} - {info['reason']} (events: {info['count']}) - "
+        f"{info['message'] or 'no details'}"
+        for key, info in sorted(failures.items())
+    ]
+
+    listed = details[:MAX_LISTED]
+    if len(details) > MAX_LISTED:
+        listed.append(f"... and {len(details) - MAX_LISTED} more")
+
+    print(
+        f"2 K8s_Failed_Jobs {perf} CRIT: {job_count} job(s) failed, "
+        f"{event_count} failure event(s){note}: " + " :: ".join(listed)
+    )
 
 
 if __name__ == "__main__":
