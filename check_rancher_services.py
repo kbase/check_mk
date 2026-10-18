@@ -107,7 +107,7 @@ def process_section(conf, section):
 		serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 		svc=serviceReq.json()
 		if svc['name'] == 'checkmkDummy':
-			oldDummyService = svc['links']['self']
+			oldDummyService = svc
 		if svc['name'] in monitoredServices:
 			serviceState = 3
 			serviceStateTxt = 'UNKNOWN'
@@ -320,11 +320,25 @@ def process_section(conf, section):
 			time.sleep(5)
 		return str(deleteReq.status_code) + ' ' + deleteReq.text[:200]
 
+	# rancher removes services asynchronously and the name stays taken until the old
+	# service is gone, so wait for it before creating a new one (otherwise 422 NotUnique)
+	def waitForRemoval(link):
+		for i in range(6):
+			svcReq = session.get(link, auth=(username,password))
+			if svcReq.status_code == 404 or svcReq.json().get('state') in ['removed','purged']:
+				return True
+			time.sleep(5)
+		return False
+
 	# a leftover dummy from a previous run is expected occasionally;
 	# only alert if it can't be cleaned up now either
 	oldDummyError = None
 	if (oldDummyService is not None):
-		oldDummyError = deleteService(oldDummyService)
+		# a service already being removed can't be deleted again, just wait for it
+		if oldDummyService['state'] not in ['removing','removed','purging','purged']:
+			oldDummyError = deleteService(oldDummyService['links']['self'])
+		if oldDummyError is None and not waitForRemoval(oldDummyService['links']['self']):
+			oldDummyError = 'not removed after 30s'
 
 	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=containerConfig, auth=(username,password))
 	if newSvcReq.ok:
