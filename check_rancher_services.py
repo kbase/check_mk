@@ -107,7 +107,7 @@ def process_section(conf, section):
 		serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
 		svc=serviceReq.json()
 		if svc['name'] == 'checkmkDummy':
-			oldDummyService = svc['links']['self']
+			oldDummyService = svc
 		if svc['name'] in monitoredServices:
 			serviceState = 3
 			serviceStateTxt = 'UNKNOWN'
@@ -310,12 +310,36 @@ def process_section(conf, section):
 	dummyServiceState = 3
 	dummyServiceStateTxt = 'UNKNOWN'
 
+	# rancher sometimes rejects a delete while the service is still transitioning,
+	# so retry a few times before giving up
+	def deleteService(link):
+		for i in range(5):
+			deleteReq = session.delete(link , auth=(username,password))
+			if deleteReq.ok:
+				return None
+			time.sleep(5)
+		return str(deleteReq.status_code) + ' ' + deleteReq.text[:200]
+
+	# rancher removes services asynchronously and the name stays taken until the old
+	# service is gone, so wait for it before creating a new one (otherwise 422 NotUnique)
+	def waitForRemoval(link):
+		for i in range(6):
+			svcReq = session.get(link, auth=(username,password))
+			if svcReq.status_code == 404 or svcReq.json().get('state') in ['removed','purged']:
+				return True
+			time.sleep(5)
+		return False
+
+	# a leftover dummy from a previous run is expected occasionally;
+	# only alert if it can't be cleaned up now either
+	oldDummyError = None
 	if (oldDummyService is not None):
-		deleteOldDummySvcReq = session.delete(oldDummyService , auth=(username,password))
-		if not deleteOldDummySvcReq.ok:
-			dummyServiceState = 2
-			dummyServiceStateTxt += ' unable to delete previously created service'
-		
+		# a service already being removed can't be deleted again, just wait for it
+		if oldDummyService['state'] not in ['removing','removed','purging','purged']:
+			oldDummyError = deleteService(oldDummyService['links']['self'])
+		if oldDummyError is None and not waitForRemoval(oldDummyService['links']['self']):
+			oldDummyError = 'not removed after 30s'
+
 	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=containerConfig, auth=(username,password))
 	if newSvcReq.ok:
 		newDummyService = newSvcReq.json()
@@ -334,14 +358,19 @@ def process_section(conf, section):
 				dummyServiceState = 1
 				dummyServiceStateTxt = 'WARNING: created service but service not healthy, state ' + str(dummySvc['healthState'])
 
-		deleteSvcReq = session.delete(newDummyService['links']['self'] , auth=(username,password))
-		if not deleteSvcReq.ok:
-			dummyServiceState = 1
-			dummyServiceStateTxt += ' ; unable to delete created dummy service'
+		# don't alert on a failed delete here; the next run cleans up the leftover
+		# and alerts if that fails too
+		deleteError = deleteService(newDummyService['links']['self'])
+		if deleteError is not None:
+			dummyServiceStateTxt += ' ; dummy service delete failed, will retry next run (' + deleteError + ')'
 
 	else:
 		dummyServiceState = 1
 		dummyServiceStateTxt = 'WARNING: did not get 200 creating service: ' + str(newSvcReq.text)
+
+	if oldDummyError is not None:
+		dummyServiceState = max(dummyServiceState, 1)
+		dummyServiceStateTxt += ' ; unable to delete leftover dummy service from previous run (' + oldDummyError + ')'
 	print (str(dummyServiceState) + ' ' + envname + '_' + stackname + '_createNewService - ' + dummyServiceStateTxt)
 
 
