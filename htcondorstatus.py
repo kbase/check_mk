@@ -114,34 +114,32 @@ for slot in slots:
 for clientgroup in conf.sections():
 	if clientgroup in ['DEFAULT','global']:
 		continue
-	try:
-		clientgroupState=3
-		clientgroupStateText='UNKNOWN'
+	# a clientgroup with no slots reported has zero workers; check it against
+	# its thresholds instead of reporting UNKNOWN
+	counts = slotCounts.get(clientgroup, {'Total': 0, 'Idle': 0})
+	clientgroupState=3
+	clientgroupStateText='UNKNOWN'
 
-		if slotCounts[clientgroup]['Total'] >= conf.getint(clientgroup,'minTotal.warn'):
-			clientgroupState=0
-			clientgroupStateText='OK'
-		if slotCounts[clientgroup]['Idle'] >= conf.getint(clientgroup,'minIdle.warn'):
-			clientgroupState=0
-			clientgroupStateText='OK'
-		if slotCounts[clientgroup]['Total'] < conf.getint(clientgroup,'minTotal.warn'):
-			clientgroupState=1
-			clientgroupStateText='WARNING'
-		if slotCounts[clientgroup]['Idle'] < conf.getint(clientgroup,'minIdle.warn'):
-			clientgroupState=1
-			clientgroupStateText='WARNING'
-		if slotCounts[clientgroup]['Total'] < conf.getint(clientgroup,'minTotal.crit'):
-			clientgroupState=2
-			clientgroupStateText='CRITICAL'
-		if slotCounts[clientgroup]['Idle'] < conf.getint(clientgroup,'minIdle.crit'):
-			clientgroupState=2
-			clientgroupStateText='CRITICAL'
+	if counts['Total'] >= conf.getint(clientgroup,'minTotal.warn'):
+		clientgroupState=0
+		clientgroupStateText='OK'
+	if counts['Idle'] >= conf.getint(clientgroup,'minIdle.warn'):
+		clientgroupState=0
+		clientgroupStateText='OK'
+	if counts['Total'] < conf.getint(clientgroup,'minTotal.warn'):
+		clientgroupState=1
+		clientgroupStateText='WARNING'
+	if counts['Idle'] < conf.getint(clientgroup,'minIdle.warn'):
+		clientgroupState=1
+		clientgroupStateText='WARNING'
+	if counts['Total'] < conf.getint(clientgroup,'minTotal.crit'):
+		clientgroupState=2
+		clientgroupStateText='CRITICAL'
+	if counts['Idle'] < conf.getint(clientgroup,'minIdle.crit'):
+		clientgroupState=2
+		clientgroupStateText='CRITICAL'
 
-#		print str(clientgroupState) + ' Condor_clientgroup_' + clientgroup + ' - ' + clientgroupStateText + ' - clientgroup ' + clientgroup + ' has ' + str(slotCounts[clientgroup]['Total']) + ' total workers and ' + str(slotCounts[clientgroup]['Idle']) + ' idle workers'
-		print ("%d Condor_clientgroup_%s %s=%d;%d;%d;0 %s - clientgroup %s has %d total workers and %d idle workers" % (clientgroupState,clientgroup,clientgroup,slotCounts[clientgroup]['Idle'],conf.getint(clientgroup,'minIdle.warn'),conf.getint(clientgroup,'minIdle.crit'),clientgroupStateText,clientgroup,slotCounts[clientgroup]['Total'],slotCounts[clientgroup]['Idle']))
-
-	except:
-		print (str(3) + ' Condor_clientgroup_' + clientgroup + ' - UNKNOWN - clientgroup ' + clientgroup + ' has no workers in any state')
+	print ("%d Condor_clientgroup_%s %s=%d;%d;%d;0 %s - clientgroup %s has %d total workers and %d idle workers" % (clientgroupState,clientgroup,clientgroup,counts['Idle'],conf.getint(clientgroup,'minIdle.warn'),conf.getint(clientgroup,'minIdle.crit'),clientgroupStateText,clientgroup,counts['Total'],counts['Idle']))
 
 schedddaemon = collector.locateAll(htcondor.DaemonTypes.Schedd)[0]
 
