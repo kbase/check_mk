@@ -18,6 +18,9 @@ import sqlite3
 import pathlib
 from pprint import pprint
 
+# seconds to wait for a rancher api response
+REQUEST_TIMEOUT = 10
+
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
 parser.add_argument('--config-file', dest='configfile', required=True,
 		    help='Path to config file (INI format). (required)')
@@ -58,7 +61,7 @@ def process_section(conf, section):
 	#print (monitoredServices)
 
 	session=requests.Session()
-	hostsReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/hosts/', auth=(username,password))
+	hostsReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/hosts/', auth=(username,password), timeout=REQUEST_TIMEOUT)
 	hostData=hostsReq.json()['data']
 
 # monitor rancher agents
@@ -73,7 +76,7 @@ def process_section(conf, section):
 			state=0
 			stateText='OK'
 
-		instanceReq=session.get(host['links']['instances'] + '?limit=500' ,auth=(username,password))
+		instanceReq=session.get(host['links']['instances'] + '?limit=500' ,auth=(username,password), timeout=REQUEST_TIMEOUT)
 		instanceData=instanceReq.json()['data']
 	#	print len(instanceData)
 	#	for instance in instanceData:
@@ -85,7 +88,7 @@ def process_section(conf, section):
 		return(0)
 
 # to do: monitor services inside a stack
-	stackReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/stacks/', auth=(username,password))
+	stackReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/stacks/', auth=(username,password), timeout=REQUEST_TIMEOUT)
 	stackData=stackReq.json()['data']
 
 # assume there's only one
@@ -106,7 +109,7 @@ def process_section(conf, section):
 	for serviceId in stackData[myStack]['serviceIds']:
 	#	print (serviceId)
 # in the stack, look through serviceIds for named services in /v2-beta/projects/envid/services/serviceId
-		serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
+		serviceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password), timeout=REQUEST_TIMEOUT)
 		svc=serviceReq.json()
 		if svc['name'] == 'checkmkDummy':
 			oldDummyService = svc
@@ -157,7 +160,7 @@ def process_section(conf, section):
 		else:
 			# we're trolling this again, meh. but only when stack is unhealthy, so don't worry about it
 			for serviceId in stackData[myStack]['serviceIds']:
-				healthServiceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password))
+				healthServiceReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/services/' + serviceId, auth=(username,password), timeout=REQUEST_TIMEOUT)
 				healthSvc=healthServiceReq.json()
 #				print (healthSvc['id'] + ' ' + healthSvc['healthState'])
 				if (healthSvc['healthState'] == 'healthy' or healthSvc['healthState'] == 'started-once'):
@@ -315,21 +318,31 @@ def process_section(conf, section):
 	# rancher sometimes rejects a delete while the service is still transitioning,
 	# so retry a few times before giving up
 	def deleteService(link):
-		for i in range(5):
-			deleteReq = session.delete(link , auth=(username,password))
+		for i in range(3):
+			if i > 0:
+				time.sleep(3)
+			try:
+				deleteReq = session.delete(link , auth=(username,password), timeout=REQUEST_TIMEOUT)
+			except requests.exceptions.RequestException as e:
+				error = str(e)
+				continue
 			if deleteReq.ok:
 				return None
-			time.sleep(5)
-		return str(deleteReq.status_code) + ' ' + deleteReq.text[:200]
+			error = str(deleteReq.status_code) + ' ' + deleteReq.text[:200]
+		return error
 
 	# rancher removes services asynchronously and the name stays taken until the old
 	# service is gone, so wait for it before creating a new one (otherwise 422 NotUnique)
 	def waitForRemoval(link):
 		for i in range(6):
-			svcReq = session.get(link, auth=(username,password))
+			if i > 0:
+				time.sleep(3)
+			try:
+				svcReq = session.get(link, auth=(username,password), timeout=REQUEST_TIMEOUT)
+			except requests.exceptions.RequestException:
+				continue
 			if svcReq.status_code == 404 or svcReq.json().get('state') in ['removed','purged']:
 				return True
-			time.sleep(5)
 		return False
 
 	# a leftover dummy from a previous run is expected occasionally;
@@ -340,14 +353,14 @@ def process_section(conf, section):
 		if oldDummyService['state'] not in ['removing','removed','purging','purged']:
 			oldDummyError = deleteService(oldDummyService['links']['self'])
 		if oldDummyError is None and not waitForRemoval(oldDummyService['links']['self']):
-			oldDummyError = 'not removed after 30s'
+			oldDummyError = 'not removed after 15s'
 
-	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=containerConfig, auth=(username,password))
+	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=containerConfig, auth=(username,password), timeout=REQUEST_TIMEOUT)
 	if newSvcReq.ok:
 		newDummyService = newSvcReq.json()
 		for i in range(5):
 			time.sleep(5)
-			newSvcState = session.get(newDummyService['links']['self'], auth=(username,password))
+			newSvcState = session.get(newDummyService['links']['self'], auth=(username,password), timeout=REQUEST_TIMEOUT)
 			dummySvc = newSvcState.json()
 
 			# this doesn't detect if the service has been deleted
