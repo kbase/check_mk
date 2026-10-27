@@ -19,7 +19,7 @@ import pathlib
 from pprint import pprint
 
 # seconds to wait for a rancher api response
-REQUEST_TIMEOUT = 10
+REQUEST_TIMEOUT = 30
 
 parser = argparse.ArgumentParser(description='Check the status of Rancher agents and their containers.')
 parser.add_argument('--config-file', dest='configfile', required=True,
