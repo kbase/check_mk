@@ -72,16 +72,17 @@ def process_section(conf, section):
 		if (host['state'] == 'active'):
 			state=0
 			stateText='OK'
-		if (host['state'] == 'inactive'):
-			state=1
-			stateText='WARNING'
 
 		instanceReq=session.get(host['links']['instances'] + '?limit=500' ,auth=(username,password))
 		instanceData=instanceReq.json()['data']
 	#	print len(instanceData)
 	#	for instance in instanceData:
 	#		print instance
-		print (str(state) + ' rancher_agent_' + host['hostname'] + ' numContainers=' + str(len(instanceData)) + ';;;20;500 '  + stateText + ' host ' + host['hostname'] + ' ; state: ' + host['state'] + ' ; running containers: ' + str(len(instanceData)))
+		print (str(state) + ' rancher_agent_' + host['hostname'] + ' numContainers=' + str(len(instanceData)) + ';;;20;500 '  + stateText + ' host ' + host['hostname'] + ' running containers: ' + str(len(instanceData)))
+
+##### test overall stack health
+	if (conf.has_option(section,'test_stack_health') and conf.getboolean(section,'test_stack_health') is False):
+		return(0)
 
 # to do: monitor services inside a stack
 	stackReq=session.get(urlbase+'/v2-beta/projects/' + envid + '/stacks/', auth=(username,password))
@@ -94,6 +95,7 @@ def process_section(conf, section):
 		myStack = [i for i,j in enumerate(stackData) if j['name'] == stackname][0]
 	except:
 # assume no stack data; this is bad and need better handling
+		print ('something bad happened')
 		sys.exit(0)
 	stackId = stackData[myStack]['id']
 
@@ -164,7 +166,7 @@ def process_section(conf, section):
 				else:
 					conn.execute('INSERT OR IGNORE INTO badServices (serviceId, serviceName) VALUES (?,?)', [ healthSvc['id'], healthSvc['name']] )
 					conn.commit()
-					
+
 
 			cursor = conn.cursor()
 			# this should return only services that have been unhealthy for a while (in theory persistently unhealthy)
@@ -315,7 +317,7 @@ def process_section(conf, section):
 		if not deleteOldDummySvcReq.ok:
 			dummyServiceState = 2
 			dummyServiceStateTxt += ' unable to delete previously created service'
-		
+
 	newSvcReq = session.post(urlbase+'/v2-beta/projects/' + envid + '/service', json=containerConfig, auth=(username,password))
 	if newSvcReq.ok:
 		newDummyService = newSvcReq.json()
