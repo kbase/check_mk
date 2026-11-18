@@ -1,0 +1,250 @@
+#!/usr/bin/env python3
+
+"""
+CheckMK local check: cert-manager Certificate, Issuer and ClusterIssuer health
+
+Deploy to: /usr/lib/check_mk_agent/local/certmanager_certs
+Make executable: chmod +x /usr/lib/check_mk_agent/local/certmanager_certs
+
+Emits one service per object, like statefulset_checker. cert-manager object names
+are stable (unlike Job names), so discovered services do not accumulate.
+
+Each of the three kinds also gets an always-present roll-up service carrying the
+object count. Those roll-ups do not alert on object health - the per-object
+services do that, so a broken certificate is not notified twice. They exist so a
+failed kubectl query is always visible on a service that never disappears.
+
+cert-manager renews a Certificate at spec.renewBefore, which defaults to a third
+of the certificate's lifetime - 30 days before expiry for a 90 day Let's Encrypt
+cert. The expiry thresholds below therefore only fire well after an automatic
+renewal should already have happened, so an alert here means renewal is stuck,
+not that the certificate is merely getting old.
+
+Status mapping:
+  0 (OK)      - object is Ready, and for Certificates not close to expiring
+  1 (WARN)    - Certificate expires within WARN_DAYS, or its renewal is overdue
+  2 (CRIT)    - Ready=False on any kind, or a Certificate expired/expiring within CRIT_DAYS
+  3 (UNKNOWN) - kubectl/parse error, or a Ready Certificate with no usable notAfter
+"""
+
+import json
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+KUBECTL = ["microk8s", "kubectl"]
+
+# Fully qualified so these cannot be resolved to certificates.k8s.io or to the
+# pre-1.0 certmanager.k8s.io group on an older cluster.
+CERTIFICATES = "certificates.cert-manager.io"
+ISSUERS = "issuers.cert-manager.io"
+CLUSTERISSUERS = "clusterissuers.cert-manager.io"
+
+WARN_DAYS = 14
+CRIT_DAYS = 7
+
+# cert-manager messages can be long (ACME order errors especially), and the
+# service detail is a single line in the CheckMK UI.
+MAX_MESSAGE = 200
+
+
+def clean(text: str) -> str:
+    # '|' separates perfdata from plugin output in CheckMK, so keep it out of the detail.
+    text = text.replace("\n", " ").replace("|", "/").strip()
+    if len(text) > MAX_MESSAGE:
+        text = text[: MAX_MESSAGE - 3] + "..."
+    return text
+
+
+def kubectl_json(resource: str, namespaced: bool = True) -> tuple[list[dict] | None, str | None]:
+    """
+    Returns (items, None) on success or (None, error) on failure. Each kind is
+    fetched independently so one missing or broken resource does not hide the
+    others - a cluster can legitimately have ClusterIssuers but no Issuers.
+    """
+    args = KUBECTL + ["get", resource]
+    if namespaced:
+        args.append("-A")
+    args += ["-o", "json"]
+
+    try:
+        result = subprocess.run(args, capture_output=True, text=True, timeout=30)
+    except OSError as exc:
+        return None, f"failed to execute kubectl - {exc}"
+    except subprocess.TimeoutExpired:
+        return None, "kubectl timed out"
+
+    if result.returncode != 0:
+        stderr = clean(result.stderr)
+        # kubectl's wording for "this CRD is not installed". Called out separately
+        # because it means cert-manager is gone, not that the cluster is unreachable.
+        if (
+            "doesn't have a resource type" in stderr
+            or "server could not find the requested resource" in stderr
+        ):
+            return None, f"{resource} not found - is cert-manager installed? - {stderr}"
+        return None, f"kubectl error - {stderr}"
+
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        return None, f"JSON parse error - {exc}"
+
+    if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+        return None, "unexpected kubectl JSON shape"
+
+    return payload["items"], None
+
+
+def service_name(prefix: str, key: str) -> str:
+    # namespace/name are DNS-1123 labels (lowercase alphanumeric and '-' only),
+    # so '_' is safe as a separator without colliding with '-' in the original names.
+    return prefix + key.replace("/", "_")
+
+
+def object_key(obj: dict, namespaced: bool) -> str:
+    meta = obj.get("metadata") or {}
+    name = meta.get("name", "unknown")
+    if not namespaced:
+        return name
+    return f"{meta.get('namespace', 'unknown')}/{name}"
+
+
+def sort_key(obj: dict) -> tuple[str, str]:
+    meta = obj.get("metadata") or {}
+    return meta.get("namespace", ""), meta.get("name", "")
+
+
+def parse_timestamp(value: str) -> datetime | None:
+    if not value:
+        return None
+
+    # Kubernetes emits RFC3339 with a literal 'Z'; fromisoformat only accepts
+    # that from Python 3.11 on, so normalise it for older agents.
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def ready_condition(obj: dict) -> dict:
+    for condition in (obj.get("status") or {}).get("conditions") or []:
+        if isinstance(condition, dict) and condition.get("type") == "Ready":
+            return condition
+    return {}
+
+
+def not_ready_detail(condition: dict) -> str:
+    reason = condition.get("reason") or "Unknown"
+    message = clean(condition.get("message") or "")
+    detail = f"not ready ({reason})"
+    if message:
+        detail += f" - {message}"
+    return detail
+
+
+def issuer_line(obj: dict, prefix: str, kind: str, namespaced: bool) -> str:
+    key = object_key(obj, namespaced)
+    service = service_name(prefix, key)
+    condition = ready_condition(obj)
+
+    if condition.get("status") == "True":
+        return f"0 {service} - OK: {kind} {key} - ready"
+
+    # An Issuer with no Ready condition at all has not been reconciled yet,
+    # which is still a broken issuer from a certificate's point of view.
+    if not condition:
+        return f"2 {service} - CRIT: {kind} {key} - no Ready condition reported yet"
+
+    return f"2 {service} - CRIT: {kind} {key} - {not_ready_detail(condition)}"
+
+
+def certificate_line(certificate: dict, now: datetime) -> str:
+    spec = certificate.get("spec") or {}
+    status = certificate.get("status") or {}
+
+    key = object_key(certificate, namespaced=True)
+    service = service_name("Certmanager_Cert_", key)
+
+    issuer_ref = spec.get("issuerRef") or {}
+    issuer = issuer_ref.get("name", "unknown")
+    issuer_kind = issuer_ref.get("kind", "Issuer")
+    secret = spec.get("secretName", "unknown")
+    context = f"{issuer_kind}: {issuer}, secret: {secret}"
+
+    condition = ready_condition(certificate)
+    is_ready = condition.get("status") == "True"
+
+    not_after = parse_timestamp(status.get("notAfter", ""))
+    renewal_time = parse_timestamp(status.get("renewalTime", ""))
+
+    if not_after is None:
+        perf = "-"
+    else:
+        days = (not_after - now).total_seconds() / 86400
+        perf = f"days_remaining={days:.2f};{WARN_DAYS};{CRIT_DAYS}"
+        if days < 0:
+            expiry_detail = f"EXPIRED {abs(days):.1f}d ago (notAfter {status['notAfter']})"
+        else:
+            expiry_detail = f"expires {status['notAfter']} ({days:.1f}d remaining)"
+
+    # Not Ready outranks everything else: the stored secret may be absent or stale,
+    # whatever its embedded expiry says.
+    if not is_ready:
+        return f"2 {service} {perf} CRIT: {key} - {not_ready_detail(condition)} - {context}"
+
+    if not_after is None:
+        return (
+            f"3 {service} {perf} UNKNOWN: {key} - ready but "
+            f"status.notAfter is missing or unparseable - {context}"
+        )
+
+    if days < CRIT_DAYS:
+        return f"2 {service} {perf} CRIT: {key} - {expiry_detail} - {context}"
+
+    if days < WARN_DAYS:
+        return f"1 {service} {perf} WARN: {key} - {expiry_detail} - {context}"
+
+    # Ready and not near expiry, but cert-manager said it would have renewed by
+    # now and has not. Caught early, while there is still plenty of validity left.
+    if renewal_time is not None and renewal_time < now:
+        overdue = (now - renewal_time).total_seconds() / 86400
+        return (
+            f"1 {service} {perf} WARN: {key} - renewal overdue by "
+            f"{overdue:.1f}d (due {status['renewalTime']}) - {expiry_detail} - {context}"
+        )
+
+    return f"0 {service} {perf} OK: {key} - ready, {expiry_detail} - {context}"
+
+
+def rollup(service: str, items: list[dict] | None, error: str | None, label: str) -> None:
+    if error is not None:
+        print(f"3 {service} - UNKNOWN: {error}")
+        return
+    count = len(items or [])
+    print(f"0 {service} count={count} OK: {count} {label} checked")
+
+
+def main() -> None:
+    now = datetime.now(timezone.utc)
+
+    certificates, cert_error = kubectl_json(CERTIFICATES)
+    issuers, issuer_error = kubectl_json(ISSUERS)
+    clusterissuers, clusterissuer_error = kubectl_json(CLUSTERISSUERS, namespaced=False)
+
+    rollup("Certmanager_Certs", certificates, cert_error, "certificate(s)")
+    rollup("Certmanager_Issuers", issuers, issuer_error, "issuer(s)")
+    rollup("Certmanager_ClusterIssuers", clusterissuers, clusterissuer_error, "clusterissuer(s)")
+
+    for certificate in sorted(certificates or [], key=sort_key):
+        print(certificate_line(certificate, now))
+
+    for issuer in sorted(issuers or [], key=sort_key):
+        print(issuer_line(issuer, "Certmanager_Issuer_", "Issuer", namespaced=True))
+
+    for clusterissuer in sorted(clusterissuers or [], key=sort_key):
+        print(issuer_line(clusterissuer, "Certmanager_ClusterIssuer_", "ClusterIssuer", namespaced=False))
+
+
+if __name__ == "__main__":
+    main()
