@@ -29,7 +29,6 @@ Status mapping:
 
 import json
 import subprocess
-import sys
 from datetime import datetime, timezone
 
 KUBECTL = ["microk8s", "kubectl"]
@@ -125,8 +124,9 @@ def parse_timestamp(value: str) -> datetime | None:
     if not value:
         return None
 
-    # Kubernetes emits RFC3339 with a literal 'Z'; fromisoformat only accepts
-    # that from Python 3.11 on, so normalise it for older agents.
+    # Kubernetes emits RFC3339 with a literal 'Z', which fromisoformat only
+    # accepts from Python 3.11 on, so normalise it for a 3.10 agent. (The
+    # X | None hints already require 3.10+, as in statefulset_checker.)
     try:
         return datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
@@ -174,6 +174,18 @@ def ready_condition(obj: dict) -> dict:
     return condition
 
 
+def ready_state(condition: dict) -> tuple[str, str]:
+    """
+    CheckMK state for a condition that is not Ready=True. Unknown - which
+    covers a stale condition the controller has not reconciled yet - is
+    indeterminate rather than failed, and usually clears within seconds, so it
+    warns. An explicit Ready=False is a real failure and stays critical.
+    """
+    if condition.get("status") == "Unknown":
+        return "1", "WARN"
+    return "2", "CRIT"
+
+
 def not_ready_detail(condition: dict) -> str:
     reason = condition.get("reason") or "Unknown"
     message = clean(condition.get("message") or "")
@@ -196,7 +208,8 @@ def issuer_line(obj: dict, prefix: str, kind: str, namespaced: bool) -> str:
     if not condition:
         return f"2 {service} - CRIT: {kind} {key} - no Ready condition reported yet"
 
-    return f"2 {service} - CRIT: {kind} {key} - {not_ready_detail(condition)}"
+    state, label = ready_state(condition)
+    return f"{state} {service} - {label}: {kind} {key} - {not_ready_detail(condition)}"
 
 
 def certificate_line(certificate: dict, now: datetime) -> str:
@@ -209,7 +222,11 @@ def certificate_line(certificate: dict, now: datetime) -> str:
     issuer_ref = spec.get("issuerRef") or {}
     issuer = issuer_ref.get("name", "unknown")
     issuer_kind = issuer_ref.get("kind", "Issuer")
-    context = f"{issuer_kind}: {issuer}, secret: [REDACTED]"
+    # spec.secretName is omitted rather than printed: it tripped CodeQL's
+    # clear-text-logging rule, and the Certificate's own namespace/name already
+    # identifies it. Print it instead if that alert is dismissed as a false
+    # positive - a Secret's name is not itself sensitive.
+    context = f"{issuer_kind}: {issuer}"
 
     condition = ready_condition(certificate)
     is_ready = condition.get("status") == "True"
@@ -230,7 +247,8 @@ def certificate_line(certificate: dict, now: datetime) -> str:
     # Not Ready outranks everything else: the stored secret may be absent or stale,
     # whatever its embedded expiry says.
     if not is_ready:
-        return f"2 {service} {perf} CRIT: {key} - {not_ready_detail(condition)} - {context}"
+        state, label = ready_state(condition)
+        return f"{state} {service} {perf} {label}: {key} - {not_ready_detail(condition)} - {context}"
 
     if not_after is None:
         return (
@@ -246,12 +264,14 @@ def certificate_line(certificate: dict, now: datetime) -> str:
 
     # Ready and not near expiry, but cert-manager scheduled renewal well before
     # now and it still has not completed. Caught early, while there is still
-    # plenty of validity left. An in-flight renewal (Issuing=True) is healthy
-    # progress, not a stall, so it is never reported here - the expiry
-    # thresholds above still catch it if issuance never finishes.
-    issuing = condition_by_type(certificate, "Issuing").get("status") == "True"
-
-    if renewal_time is not None and not issuing:
+    # plenty of validity left.
+    #
+    # Deliberately NOT suppressed while Issuing=True: RENEWAL_GRACE_DAYS already
+    # covers a renewal that is healthily in progress, and a DNS-01 challenge
+    # that never completes leaves Issuing=True indefinitely. Skipping those
+    # would hide a stuck renewal until the expiry thresholds caught it, roughly
+    # 16 days later for a 90 day certificate.
+    if renewal_time is not None:
         overdue = (now - renewal_time).total_seconds() / 86400
         if overdue > RENEWAL_GRACE_DAYS:
             return (
