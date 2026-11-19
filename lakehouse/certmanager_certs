@@ -43,6 +43,12 @@ CLUSTERISSUERS = "clusterissuers.cert-manager.io"
 WARN_DAYS = 14
 CRIT_DAYS = 7
 
+# status.renewalTime is when cert-manager schedules renewal to *start*, not a
+# deadline for it to have finished. Issuance takes time (ACME especially), so
+# warn only once renewal is this far past due; without the grace period a
+# renewal that began a second ago already reports "overdue by 0.0d".
+RENEWAL_GRACE_DAYS = 2
+
 # cert-manager messages can be long (ACME order errors especially), and the
 # service detail is a single line in the CheckMK UI.
 MAX_MESSAGE = 200
@@ -127,27 +133,45 @@ def parse_timestamp(value: str) -> datetime | None:
         return None
 
 
-def ready_condition(obj: dict) -> dict:
+def condition_by_type(obj: dict, wanted: str) -> dict:
     for condition in (obj.get("status") or {}).get("conditions") or []:
-        if isinstance(condition, dict) and condition.get("type") == "Ready":
-            observed_generation = condition.get("observedGeneration")
-            generation = (obj.get("metadata") or {}).get("generation")
-            if (
-                observed_generation is not None
-                and generation is not None
-                and observed_generation < generation
-            ):
-                return {
-                    **condition,
-                    "status": "Unknown",
-                    "reason": "StaleReadyCondition",
-                    "message": (
-                        f"controller has not observed generation {generation} yet "
-                        f"(Ready condition is for generation {observed_generation})"
-                    ),
-                }
+        if isinstance(condition, dict) and condition.get("type") == wanted:
             return condition
     return {}
+
+
+def ready_condition(obj: dict) -> dict:
+    """
+    The Ready condition, rewritten to a stale marker when it predates the
+    current spec. After a spec change the controller may not have reconciled
+    yet, and the old Ready=True would otherwise report OK for the new spec.
+    """
+    condition = condition_by_type(obj, "Ready")
+    if not condition:
+        return {}
+
+    observed_generation = condition.get("observedGeneration")
+    generation = (obj.get("metadata") or {}).get("generation")
+
+    # isinstance covers the field being absent (None), keeping compatibility
+    # with conditions that omit observedGeneration, and guards a non-integer
+    # that would raise TypeError on the comparison.
+    if (
+        isinstance(observed_generation, int)
+        and isinstance(generation, int)
+        and observed_generation < generation
+    ):
+        return {
+            **condition,
+            "status": "Unknown",
+            "reason": "StaleReadyCondition",
+            "message": (
+                f"controller has not observed generation {generation} yet "
+                f"(Ready condition is for generation {observed_generation})"
+            ),
+        }
+
+    return condition
 
 
 def not_ready_detail(condition: dict) -> str:
@@ -220,14 +244,21 @@ def certificate_line(certificate: dict, now: datetime) -> str:
     if days < WARN_DAYS:
         return f"1 {service} {perf} WARN: {key} - {expiry_detail} - {context}"
 
-    # Ready and not near expiry, but cert-manager said it would have renewed by
-    # now and has not. Caught early, while there is still plenty of validity left.
-    if renewal_time is not None and renewal_time < now:
+    # Ready and not near expiry, but cert-manager scheduled renewal well before
+    # now and it still has not completed. Caught early, while there is still
+    # plenty of validity left. An in-flight renewal (Issuing=True) is healthy
+    # progress, not a stall, so it is never reported here - the expiry
+    # thresholds above still catch it if issuance never finishes.
+    issuing = condition_by_type(certificate, "Issuing").get("status") == "True"
+
+    if renewal_time is not None and not issuing:
         overdue = (now - renewal_time).total_seconds() / 86400
-        return (
-            f"1 {service} {perf} WARN: {key} - renewal overdue by "
-            f"{overdue:.1f}d (due {status['renewalTime']}) - {expiry_detail} - {context}"
-        )
+        if overdue > RENEWAL_GRACE_DAYS:
+            return (
+                f"1 {service} {perf} WARN: {key} - renewal overdue by "
+                f"{overdue:.1f}d (due {status['renewalTime']}, grace "
+                f"{RENEWAL_GRACE_DAYS}d) - {expiry_detail} - {context}"
+            )
 
     return f"0 {service} {perf} OK: {key} - ready, {expiry_detail} - {context}"
 
