@@ -130,6 +130,22 @@ def parse_timestamp(value: str) -> datetime | None:
 def ready_condition(obj: dict) -> dict:
     for condition in (obj.get("status") or {}).get("conditions") or []:
         if isinstance(condition, dict) and condition.get("type") == "Ready":
+            observed_generation = condition.get("observedGeneration")
+            generation = (obj.get("metadata") or {}).get("generation")
+            if (
+                observed_generation is not None
+                and generation is not None
+                and observed_generation < generation
+            ):
+                return {
+                    **condition,
+                    "status": "Unknown",
+                    "reason": "StaleReadyCondition",
+                    "message": (
+                        f"controller has not observed generation {generation} yet "
+                        f"(Ready condition is for generation {observed_generation})"
+                    ),
+                }
             return condition
     return {}
 
