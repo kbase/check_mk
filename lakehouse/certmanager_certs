@@ -169,8 +169,7 @@ def certificate_line(certificate: dict, now: datetime) -> str:
     issuer_ref = spec.get("issuerRef") or {}
     issuer = issuer_ref.get("name", "unknown")
     issuer_kind = issuer_ref.get("kind", "Issuer")
-    secret = spec.get("secretName", "unknown")
-    context = f"{issuer_kind}: {issuer}, secret: {secret}"
+    context = f"{issuer_kind}: {issuer}, secret: [REDACTED]"
 
     condition = ready_condition(certificate)
     is_ready = condition.get("status") == "True"
