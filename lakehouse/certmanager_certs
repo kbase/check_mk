@@ -29,6 +29,7 @@ Status mapping:
 
 import json
 import subprocess
+import time
 from datetime import datetime, timezone
 
 KUBECTL = ["microk8s", "kubectl"]
@@ -48,6 +49,14 @@ CRIT_DAYS = 7
 # renewal that began a second ago already reports "overdue by 0.0d".
 RENEWAL_GRACE_DAYS = 2
 
+# Budget shared across all three kubectl calls, not per call. A per-call
+# timeout lets a hanging API server cost 3x that, which would blow through
+# CheckMK's 60s agent timeout and fail the whole host's fetch - every service
+# on it goes stale, and the UNKNOWN this check meant to report never arrives.
+# If these queries are ever slow enough to need longer, run the check cached
+# via local/<interval>/ rather than raising this.
+TOTAL_TIMEOUT_SECONDS = 30
+
 # cert-manager messages can be long (ACME order errors especially), and the
 # service detail is a single line in the CheckMK UI.
 MAX_MESSAGE = 200
@@ -61,23 +70,35 @@ def clean(text: str) -> str:
     return text
 
 
-def kubectl_json(resource: str, namespaced: bool = True) -> tuple[list[dict] | None, str | None]:
+def kubectl_json(
+    resource: str, deadline: float, namespaced: bool = True
+) -> tuple[list[dict] | None, str | None]:
     """
     Returns (items, None) on success or (None, error) on failure. Each kind is
     fetched independently so one missing or broken resource does not hide the
     others - a cluster can legitimately have ClusterIssuers but no Issuers.
+
+    `deadline` is a time.monotonic() value shared by every call, so the three
+    queries together cannot outlast TOTAL_TIMEOUT_SECONDS.
     """
     args = KUBECTL + ["get", resource]
     if namespaced:
         args.append("-A")
     args += ["-o", "json"]
 
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        return None, (
+            f"skipped - the {TOTAL_TIMEOUT_SECONDS}s budget shared by all "
+            f"kubectl calls was already spent"
+        )
+
     try:
-        result = subprocess.run(args, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(args, capture_output=True, text=True, timeout=remaining)
     except OSError as exc:
         return None, f"failed to execute kubectl - {exc}"
     except subprocess.TimeoutExpired:
-        return None, "kubectl timed out"
+        return None, f"kubectl timed out ({TOTAL_TIMEOUT_SECONDS}s shared budget)"
 
     if result.returncode != 0:
         stderr = clean(result.stderr)
@@ -107,30 +128,47 @@ def service_name(prefix: str, key: str) -> str:
     return prefix + key.replace("/", "_")
 
 
-def object_key(obj: dict, namespaced: bool) -> str:
-    meta = obj.get("metadata") or {}
-    name = meta.get("name", "unknown")
+def metadata_of(obj: object) -> dict:
+    meta = obj.get("metadata") if isinstance(obj, dict) else None
+    return meta if isinstance(meta, dict) else {}
+
+
+def object_key(obj: object, namespaced: bool) -> str:
+    meta = metadata_of(obj)
+    name = str(meta.get("name") or "unknown")
     if not namespaced:
         return name
-    return f"{meta.get('namespace', 'unknown')}/{name}"
+    return f"{str(meta.get('namespace') or 'unknown')}/{name}"
 
 
-def sort_key(obj: dict) -> tuple[str, str]:
-    meta = obj.get("metadata") or {}
-    return meta.get("namespace", ""), meta.get("name", "")
+def sort_key(obj: object) -> tuple[str, str]:
+    # str() keeps sorted() from raising if the API ever hands back a non-string.
+    meta = metadata_of(obj)
+    return str(meta.get("namespace") or ""), str(meta.get("name") or "")
 
 
-def parse_timestamp(value: str) -> datetime | None:
-    if not value:
+def parse_timestamp(value: object) -> datetime | None:
+    # Anything that is not a non-empty string is unusable; returning None sends
+    # the caller down its "no usable timestamp" path instead of raising
+    # AttributeError on .replace below.
+    if not isinstance(value, str) or not value:
         return None
 
     # Kubernetes emits RFC3339 with a literal 'Z', which fromisoformat only
     # accepts from Python 3.11 on, so normalise it for a 3.10 agent. (The
     # X | None hints already require 3.10+, as in statefulset_checker.)
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
         return None
+
+    # RFC3339 always carries an offset, but a hand-edited status might not.
+    # A naive datetime would raise TypeError when subtracted from the aware
+    # `now`, so assume UTC - which is what the API server writes.
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+
+    return parsed
 
 
 def condition_by_type(obj: dict, wanted: str) -> dict:
@@ -283,6 +321,23 @@ def certificate_line(certificate: dict, now: datetime) -> str:
     return f"0 {service} {perf} OK: {key} - ready, {expiry_detail} - {context}"
 
 
+def guarded(render, obj: object, prefix: str, namespaced: bool) -> str:
+    """
+    Render one object's service line, degrading to UNKNOWN for that object
+    alone. Without this an unexpected error anywhere in the rendering kills the
+    script, and every cert-manager service on the host drops out at once.
+    """
+    try:
+        return render(obj)
+    except Exception as exc:  # noqa: BLE001 - deliberately total
+        try:
+            key = object_key(obj, namespaced)
+        except Exception:  # noqa: BLE001
+            key = "unknown"
+        detail = clean(f"{type(exc).__name__}: {exc}")
+        return f"3 {service_name(prefix, key)} - UNKNOWN: {key} - check error - {detail}"
+
+
 def rollup(service: str, items: list[dict] | None, error: str | None, label: str) -> None:
     if error is not None:
         print(f"3 {service} - UNKNOWN: {error}")
@@ -294,22 +349,36 @@ def rollup(service: str, items: list[dict] | None, error: str | None, label: str
 def main() -> None:
     now = datetime.now(timezone.utc)
 
-    certificates, cert_error = kubectl_json(CERTIFICATES)
-    issuers, issuer_error = kubectl_json(ISSUERS)
-    clusterissuers, clusterissuer_error = kubectl_json(CLUSTERISSUERS, namespaced=False)
+    deadline = time.monotonic() + TOTAL_TIMEOUT_SECONDS
+    certificates, cert_error = kubectl_json(CERTIFICATES, deadline)
+    issuers, issuer_error = kubectl_json(ISSUERS, deadline)
+    clusterissuers, clusterissuer_error = kubectl_json(
+        CLUSTERISSUERS, deadline, namespaced=False
+    )
 
     rollup("Certmanager_Certs", certificates, cert_error, "certificate(s)")
     rollup("Certmanager_Issuers", issuers, issuer_error, "issuer(s)")
     rollup("Certmanager_ClusterIssuers", clusterissuers, clusterissuer_error, "clusterissuer(s)")
 
     for certificate in sorted(certificates or [], key=sort_key):
-        print(certificate_line(certificate, now))
+        print(guarded(
+            lambda obj: certificate_line(obj, now),
+            certificate, "Certmanager_Cert_", True,
+        ))
 
     for issuer in sorted(issuers or [], key=sort_key):
-        print(issuer_line(issuer, "Certmanager_Issuer_", "Issuer", namespaced=True))
+        print(guarded(
+            lambda obj: issuer_line(obj, "Certmanager_Issuer_", "Issuer", namespaced=True),
+            issuer, "Certmanager_Issuer_", True,
+        ))
 
     for clusterissuer in sorted(clusterissuers or [], key=sort_key):
-        print(issuer_line(clusterissuer, "Certmanager_ClusterIssuer_", "ClusterIssuer", namespaced=False))
+        print(guarded(
+            lambda obj: issuer_line(
+                obj, "Certmanager_ClusterIssuer_", "ClusterIssuer", namespaced=False
+            ),
+            clusterissuer, "Certmanager_ClusterIssuer_", False,
+        ))
 
 
 if __name__ == "__main__":
